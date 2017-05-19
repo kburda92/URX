@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace URX
 {
-    public class robot
+    public class Robot
     {
         public robot(string host, bool use_rt = false)
         {
