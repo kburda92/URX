@@ -46,6 +46,7 @@
     <Compile Include="urrobot.cs" />
     <Compile Include="urrtmon.cs" />
     <Compile Include="urscript.cs" />
+    <Compile Include="ursecmon.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
