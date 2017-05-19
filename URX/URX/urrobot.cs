@@ -14,7 +14,7 @@ namespace URX
     {
         string host;
         int csys;
-        sURRobot(string host, bool use_rt = false)
+        public URRobot(string host, bool use_rt = false)
         {
             //    self.logger = logging.getLogger("urx")
             this.host = host;
