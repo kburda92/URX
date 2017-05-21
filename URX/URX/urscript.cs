@@ -27,12 +27,12 @@ namespace URX
             0,  // 4-20mA
             1,  // 0-10V
         };
-
-        string header = "", program = "";
+        byte[] header = new byte[100];
+        byte[] program = new byte[100];
 
         public string call()
         {
-            if(program == "")
+            if(program.Length == 0)
             {
                 //        self.logger.debug(u"urscript program is empty")
                 return "";
@@ -49,18 +49,18 @@ namespace URX
 
         public void reset()
         {
-            header = "";
-            program = "";
+            Array.Clear(header, 0, header.Length);
+            Array.Clear(program, 0, program.Length);
         }
 
         public void add_header_to_program(string header_line)
         {
-            header = string.Format("{0}\n{1}", header, header_line);
+            header = Encoding.ASCII.GetBytes(string.Format("{0}\n{1}", header, header_line));
         }
 
         public void add_line_to_program(string new_line)
         {
-            program = string.Format("{0}\n\t{1}", program, new_line);
+            program = Encoding.ASCII.GetBytes(string.Format("{0}\n\t{1}", program, new_line));
         }
 
         private int constrain_unsigned_char(int value)

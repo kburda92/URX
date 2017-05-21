@@ -16,8 +16,8 @@ namespace URX
         private void get_lin_dist(Transform target)
         {
             var pose = base.getl(true);
-            target = new Transform(/*target*/);
-            pose = new Transform(/*pose*/);
+            target = new Transform(target);
+            pose = new Transform(pose);
             return pose.dist(target);
         }
 
@@ -62,22 +62,23 @@ namespace URX
             set_pose(trans, acc, vel, wait, "movel", threshold);
         }
 
-        public void movec(int pose_via, int pose_to, double acc = 0.01, double vel = 0.01, bool wait= true, int threshold = 0)
+        public Transform movec(Vector pose_via, Vector pose_to, double acc = 0.01, double vel = 0.01, bool wait= true, int threshold = 0)
         {
-            //    pose_via = self.csys* m3d.Transform(pose_via)
-            //    pose_to = self.csys* m3d.Transform(pose_to)
-            //    pose = URRobot.movec(self, pose_via.pose_vector, pose_to.pose_vector, acc=acc, vel=vel, wait=wait, threshold=threshold)
-            //    if pose is not None:
-            //        return self.csys.inverse* m3d.Transform(pose)
+
+            var _pose_via = csys * new Transform(pose_via);
+            var _pose_to = csys * new Transform(pose_to);
+            var pose = base.movec(pose_via.pose_vector, pose_to.pose_vector, acc, vel, wait, threshold);
+            if (pose != null)
+                return csys.inverse * new Transform(new Vector(pose));
         }
 
-        public void set_pose(Transform trans, double acc = 0.01, double vel= 0.01, bool wait = true, string command = "movel", int threshold = 0)
+        public Transform set_pose(Transform trans, double acc = 0.01, double vel= 0.01, bool wait = true, string command = "movel", int threshold = 0)
         {
             //    self.logger.debug("Setting pose to %s", trans.pose_vector)
             var t = csys * trans;
             var pose = base.movex(command, t.pose_vector, acc, vel, wait, threshold);
-            //    if pose is not None:
-            //        return self.csys.inverse* m3d.Transform(pose)
+            if (pose != null)
+                return csys.inverse * new Transform(new Vector(pose));
         }
 
         public void add_pose_base(Transform trans, double acc = 0.01, double vel = 0.01, bool wait = true, string command = "movel", int threshold = 0)
@@ -86,20 +87,19 @@ namespace URX
             set_pose(trans * pose, acc, vel, wait, command, threshold);
         }
 
-        public void add_pose_tool(Transform trans, double acc = 0.01, double vel = 0.01, bool wait = true, string command = "movel", int threshold = 0)
+        public Transform add_pose_tool(Transform trans, double acc = 0.01, double vel = 0.01, bool wait = true, string command = "movel", int threshold = 0)
         {
             var pose = get_pose();
-            set_pose(pose * trans, acc, vel, wait, command, threshold);
+            return set_pose(pose * trans, acc, vel, wait, command, threshold);
         }
 
         public Transform get_pose(bool wait = false, bool _log = true)
         {
             var pose = base.getl(wait, _log);
-            //    trans = self.csys.inverse* m3d.Transform(pose)
+            var trans = csys.inverse * new Transform(new Vector(pose));
             //    if _log:
             //        self.logger.debug("Returning pose to user: %s", trans.pose_vector)
-            //    return trans
-            return new Transform();
+            return trans;
         }
 
         public Orientation get_orientation(bool wait = false)
@@ -129,19 +129,22 @@ namespace URX
 
         public void speedl_tool(int velocities, double acc, int min_time)
         {
-            //    pose = self.get_pose()
+            var pose = get_pose();
             //    v = pose.orient* m3d.Vector(velocities[:3])
             //    w = pose.orient* m3d.Vector(velocities[3:])
-            //    self.speedl(np.concatenate((v.array, w.array)), acc, min_time)
+            //speedl(np.concatenate((v.array, w.array)), acc, min_time);
         }
 
-        public void movex(int velocities, int command, int pose, double acc= 0.01, double vel= 0.01, bool wait = true, bool relative = false, int threshold = 0)
+        public Transform movex(int velocities, string command, Vector pose, double acc= 0.01, double vel= 0.01, bool wait = true, bool relative = false, int threshold = 0)
         {
-            //   t = m3d.Transform(pose)
-            //    if relative:
-            //        return self.add_pose_base(t, acc, vel, wait= wait, command= command, threshold= threshold)
-            //    else:
-            //        return self.set_pose(t, acc, vel, wait=wait, command=command, threshold=threshold)
+            var t = new Transform(pose);
+            if (relative)
+            {
+                add_pose_base(t, acc, vel, wait, command, threshold);
+                return null;
+            }
+            else
+                return set_pose(t, acc, vel, wait, command, threshold);
         }
 
         public void movex(int command, int pose_list, double acc = 0.01, double vel = 0.01, double radius = 0.01, bool wait = true, int threshold = 0)
@@ -161,7 +164,7 @@ namespace URX
 
         public void movex_tool(string command, Vector pose, double acc = 0.01, double vel = 0.01, bool wait = true, int threshold = 0)
         {
-            var t = new Transform(/*pose*/);
+            var t = new Transform(pose);
             add_pose_tool(t, acc, vel, wait, command, threshold);
         }
 
@@ -181,7 +184,7 @@ namespace URX
         public void new_csys_from_xpy()
         {
             //    # Set coord. sys. to 0
-            //    self.csys = m3d.Transform()
+            csys = new Transform();
 
             //    print("A new coordinate system will be defined from the next three points")
             //    print("Firs point is X, second Origin, third Y")

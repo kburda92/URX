@@ -139,8 +139,17 @@ namespace URX
                 }
                 v = new Vector(vec);
             }
-            
         }
+        public Transform(Orientation orientation, Vector vector = null)
+        {
+            //TODO
+        }
+
+        public Transform(Vector vector)
+        {
+            //TODO
+        }
+
         public static Transform operator *(Transform lhs, Transform rhs)
         {
             double[,] result = new double[4, 4];

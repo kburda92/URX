@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
+using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -32,11 +34,14 @@ namespace URX
 
         private void import_rq_script()
         {
-            //    dir_path = os.path.dirname(os.path.realpath(__file__))
-            //    rq_script = os.path.join(dir_path, 'rq_script.script')
-            //    with open(rq_script, 'rb') as f:
-            //        rq_script = f.read()
-            //        self.add_header_to_program(rq_script)
+            var dir_path = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
+            var rq_script = Path.Combine(dir_path, "rq_script.script");
+            using (BinaryReader reader = new BinaryReader(File.Open(rq_script, FileMode.Open)))
+            {
+                byte[] data = reader.ReadBytes(int.MaxValue);
+                add_header_to_program(data);
+            }
+
         }
 
         private void rq_get_var(string var_name, int nbytes)
