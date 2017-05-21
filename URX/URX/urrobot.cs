@@ -6,8 +6,12 @@ using System.Threading.Tasks;
 
 namespace URX
 {
-    public class RobotException
+    public class RobotException : Exception
     {
+        public RobotException(string message) : base(message)
+        {
+
+        }
     }
 
     public class URRobot
@@ -47,21 +51,22 @@ namespace URX
         public void send_program(string prog)
         {
             //    self.logger.info("Sending program: " + prog)
-            //    self.secmon.send_program(prog)
+           secmon.send_program(prog);
         }
 
-        public void get_tcp_force(bool wait = true)
+        public double[] get_tcp_force(bool wait = true)
         {
-            //    return self.rtmon.getTCFForce(wait)
+            return rtmon.getTCFForce(wait);
         }
 
-        public void get_force(bool wait = true)
+        public double get_force(bool wait = true)
         {
-            //    tcpf = self.get_tcp_force(wait)
-            //    force = 0
-            //    for i in tcpf:
-            //        force += i**2
-            //    return force**0.5
+            var tcpf = get_tcp_force(wait);
+            double force = 0;
+            foreach (var i in tcpf)
+                force += Math.Pow(i, 2);
+                
+            return Math.Pow(force, 0.05);
         }
 
         public void set_tcp(int tcp)
@@ -70,7 +75,7 @@ namespace URX
             send_program(prog);
         }
 
-        public void set_payload(double weight, List<double> cog)
+        public void set_payload(double weight, List<double> cog = null)
         {
             string prog = "";
             if (cog != null)
@@ -115,7 +120,7 @@ namespace URX
 
         public void get_digital_in_bits()
         {
-            return self.secmon.get_digital_in_bits();
+            return secmon.get_digital_in_bits();
         }
 
         public void get_digital_in(int nb, bool wait = false)
@@ -145,30 +150,37 @@ namespace URX
             send_program(prog);
         }
 
-        private void wait_for_move(int target, int threshold, int timeout = 5, bool joints = false)
+        private void wait_for_move(double[] target, double threshold, int timeout = 5, bool joints = false)
         {
             //    self.logger.debug("Waiting for move completion using threshold %s and target %s", threshold, target)
-            //    start_dist = self._get_dist(target, joints)
-            //    if threshold is None:
-            //        threshold = start_dist* 0.8
-            //        if threshold< 0.001:  # roboten precision is limited
-            //            threshold = 0.001
-            //        self.logger.debug("No threshold set, setting it to %s", threshold)
-            //    count = 0
-            //    while True:
-            //        if not self.is_running():
-            //            raise RobotException("Robot stopped")
-            //        dist = self._get_dist(target, joints)
-            //        self.logger.debug("distance to target is: %s, target dist is %s", dist, threshold)
-            //        if not self.secmon.is_program_running():
-            //            if dist<threshold:
-            //                self.logger.debug("we are threshold(%s) close to target, move has ended", threshold)
-            //                return
-            //            count += 1
-            //            if count > timeout* 10:
-            //                raise RobotException("Goal not reached but no program has been running for {} seconds. dist is {}, threshold is {}, target is {}, current pose is {}".format(timeout, dist, threshold, target, URRobot.getl(self)))
-            //        else:
-            //            count = 0
+            var start_dist = get_dist(target, joints);
+            if (threshold == 0)
+            {
+                threshold = start_dist * 0.8;
+                if (threshold < 0.001)
+                    threshold = 0.001;
+                //        self.logger.debug("No threshold set, setting it to %s", threshold)
+            }
+            int count = 0;
+            while(true)
+            {
+                if (!is_running())
+                    throw new RobotException("Robot stopped");
+                var dist = get_dist(target, joints);
+                if (!secmon.is_program_running())
+                {
+                    if (dist < threshold)
+                    {
+                        //                self.logger.debug("we are threshold(%s) close to target, move has ended", threshold)
+                        return;
+                    }
+                    count += 1;
+                    if (count > timeout * 10)
+                        throw new RobotException(string.Format("Goal not reached but no program has been running for {0} seconds. dist is {1}, threshold is {2}, target is {3}, current pose is {4}", timeout, dist, threshold, target, getl()));
+                }
+                else
+                    count = 0;
+            }
         }
 
         private void get_dist(int target, bool joints = false)
@@ -179,27 +191,27 @@ namespace URX
                 return get_lin_dist(target);
         }
 
-        private void get_lin_dist(int target)
+        private double get_lin_dist(double[] target)
         {
             //    # FIXME: we have an issue here, it seems sometimes the axis angle received from robot
-            //    pose = URRobot.getl(self, wait=True)
-            //    dist = 0
-            //    for i in range(3):
-            //        dist += (target[i] - pose[i]) ** 2
-            //    for i in range(3, 6):
-            //        dist += ((target[i] - pose[i]) / 5) ** 2  # arbitraty length like
-            //    return dist** 0.5
+            var pose = getl(true);
+            double dist = 0;
+            for (int i = 0; i < 3; i++)
+                dist += Math.Pow(target[i] - pose[i], 2);
+            for (int i = 3; i < 6; i++)
+                dist += Math.Pow(((target[i] - pose[i]) / 5), 2);
+
+            return Math.Pow(dist, 0.5)
         }
 
-        private void get_joints_dist(int target)
+        private double get_joints_dist(double[] target)
         {
-            //    joints = getj(true)
-            int dist = 0;
-            //for (int i = 0; i < 6; i++)
-                //dist += (target[i] - joints[i]) * *2;
-            //    for i in range(6):
-            //        dist += (target[i] - joints[i]) ** 2
-            //    return dist** 0.5
+            var joints = getj(true);
+            double dist = 0;
+            for (int i = 0; i < 6; i++)
+                dist += Math.Pow(target[i] - joints[i], 2);
+
+            return Math.Pow(dist, 0.5);
         }
 
         public void getj(bool wait = false)
@@ -208,13 +220,15 @@ namespace URX
             //    return [jts["q_actual0"], jts["q_actual1"], jts["q_actual2"], jts["q_actual3"], jts["q_actual4"], jts["q_actual5"]]
         }
 
-        public void speedx(string command, int velocities, double acc, int min_time)
+        public void speedx(string command, double[] velocities, double acc, double min_time)
         {
-            //    vels = [round(i, self.max_float_length) for i in velocities]
-            //    vels.append(acc)
-            //    vels.append(min_time)
-            //    prog = "{}([{},{},{},{},{},{}], a={}, t_min={})".format(command, * vels)
-            //    self.send_program(prog)
+            List<double> vels = new List<double>();
+            for (int i = 0; i < velocities.Length; i++)
+                vels.Add(Math.Round(velocities[i], max_float_length));
+            vels.Add(acc);
+            vels.Add(min_time);
+            var prog = string.Format("{0}([{1},{2},{3},{4},{5},{6}], a={7}, t_min={8})", command, vels);
+            send_program(prog);
         }
 
         public void movej(int joints, double acc = 0.1, double vel = 0.05, bool wait = true, bool relative = false, int threshold = 0)
@@ -229,31 +243,33 @@ namespace URX
             //        return self.getj()
         }
 
-        public void movel(int tpose, double acc = 0.1, double vel = 0.1, bool wait = true, bool relative = false, int threshold = 0)
+        public void movel(double[] tpose, double acc = 0.1, double vel = 0.1, bool wait = true, bool relative = false, int threshold = 0)
         {
             //    return self.movex("movel", tpose, acc, vel, wait, relative, threshold)
         }
 
-        public void movep(int tpose, double acc = 0.1, double vel = 0.1, bool wait = true, bool relative = false, int threshold = 0)
+        public void movep(double[] tpose, double acc = 0.1, double vel = 0.1, bool wait = true, bool relative = false, int threshold = 0)
         {
             //    return self.movex("movep", tpose, acc, vel, wait, relative, threshold)
         }
 
-        public void servoc(int tpose, double acc = 0.01, double vel = 0.01, bool wait = true, bool relative = false, int threshold = 0)
+        public void servoc(double[] tpose, double acc = 0.01, double vel = 0.01, bool wait = true, bool relative = false, int threshold = 0)
         {
             //    return self.movex("servoc", tpose, acc, vel, wait, relative, threshold)
         }
 
-        private void format_move(string command, int tpose, double acc, double vel, int adius= 0, string prefix= "")
+        private string format_move(string command, double[] tpose, double acc, double vel, double radius= 0, string prefix= "")
         {
-            //    tpose = [round(i, self.max_float_length) for i in tpose]
-            //    tpose.append(acc)
-            //    tpose.append(vel)
-            //    tpose.append(radius)
-            //    return "{}({}[{},{},{},{},{},{}], a={}, v={}, r={})".format(command, prefix, * tpose)
+            List<double> _tpose = new List<double>();
+            foreach (double i in tpose)
+                _tpose.Add(Math.Round(i, max_float_length));
+            _tpose.Add(acc);
+            _tpose.Add(vel);
+            _tpose.Add(radius);
+            return string.Format("{0}({1}[{2},{3},{4},{5},{6},{7}], a={8}, v={9}, r={10})", command, prefix, tpose);
         }
 
-        public void movex(string command, int tpose, double acc= 0.01, double vel = 0.01, bool wait = true, bool relative = false, int threshold = 0)
+        public double[] movex(string command, double[] tpose, double acc= 0.01, double vel = 0.01, bool wait = true, bool relative = false, int threshold = 0)
         {
             if(relative)
             {
@@ -261,55 +277,71 @@ namespace URX
                 //var tpose = [v + l[i] for i, v in enumerate(tpose)];
             }
 
-            //   prog = self._format_move(command, tpose, acc, vel, prefix = "p")
-
-            //   self.send_program(prog)
-            //    if wait:
-            //        self._wait_for_move(tpose [:6], threshold=threshold)
-            //        return self.getl()
+            var prog = format_move(command, tpose, acc, vel, 0, "p");
+            send_program(prog);
+            if(wait)
+            {
+                var pose_six = new double[6];
+                for(int i = 0; i < 6 ;i++)
+                    pose_six[i] = tpose[i];
+                wait_for_move(pose_six, threshold);
+                return getl();
+            }
+            return null;
         }
 
-        public Vector getl(bool wait = false, bool _log = true)
+        public double[] getl(bool wait = false, bool _log = true)
         {
             var pose = secmon.get_cartesian_info(wait);
-            //    if pose:
-            //        pose = [pose["X"], pose["Y"], pose["Z"], pose["Rx"], pose["Ry"], pose["Rz"]]
+            double[] _pose = new double[6];
+            if (pose != null)
+            {
+                _pose[0] = pose["X"];
+                _pose[1] = pose["Y"];
+                _pose[2] = pose["Z"];
+                _pose[3] = pose["Rx"];
+                _pose[4] = pose["Ry"];
+                _pose[5] = pose["Rz"];
+
+            }
             //    if _log:
             //        self.logger.debug("Received pose from robot: %s", pose)
-            return pose;
+            return _pose;
         }
 
-        public void movec(int pose_via, int pose_to, double acc = 0.01, double vel = 0.01, bool wait = true, int threshold = 0)
+        public double[] movec(double[] pose_via, double[] pose_to, double acc = 0.01, double vel = 0.01, bool wait = true, int threshold = 0)
         {
-            //    pose_via = [round(i, self.max_float_length) for i in pose_via]
-            //    pose_to = [round(i, self.max_float_length) for i in pose_to]
-            //    prog = "movec(p%s, p%s, a=%s, v=%s, r=%s)" % (pose_via, pose_to, acc, vel, "0")
-            //        self.send_program(prog)
-            //    if wait:
-            //        self._wait_for_move(pose_to, threshold = threshold)
-            //        return self.getl()
+            for (int i= 0;i<pose_via.Length;i++)
+                pose_via[i] = Math.Round(pose_via[i], max_float_length);
+            for (int i = 0; i < pose_via.Length; i++)
+                pose_to[i] = Math.Round(pose_to[i], max_float_length);
+            var prog = string.Format("movec(p{0}, p{1}, a={2}, v={3}, r={4})", pose_via, pose_to, acc, vel, "0");
+            send_program(prog);
+            if (wait)
+                wait_for_move(pose_to, threshold);
+            return getl();
         }
 
-        public void movels(int pose_list, double acc = 0.01, double vel = 0.01, double radius = 0.01, bool wait = true, int threshold = 0)
-        {
-            //    return self.movexs("movel", pose_list, acc, vel, radius, wait, threshold = threshold)
-        }
+        //public void movels(int pose_list, double acc = 0.01, double vel = 0.01, double radius = 0.01, bool wait = true, int threshold = 0)
+        //{
+        //    //    return self.movexs("movel", pose_list, acc, vel, radius, wait, threshold = threshold)
+        //}
 
-        public void movexs(string command, int pose_list, double acc = 0.01, double vel = 0.01, double radius = 0.01, bool wait = true, int threshold = 0)
-        {
-            //    header = "def myProg():\n"
-            //    end = "end\n"
-            //    prog = header
-            //    for idx, pose in enumerate(pose_list):
-            //        if idx == (len(pose_list) - 1):
-            //            radius = 0
-            //        prog += self._format_move(command, pose, acc, vel, radius, prefix = "p") + "\n"
-            //    prog += end
-            //    self.send_program(prog)
-            //    if wait:
-            //        self._wait_for_move(target = pose_list[-1], threshold = threshold)
-            //        return self.getl()
-        }
+        //public void movexs(string command, double[] pose_list, double acc = 0.01, double vel = 0.01, double radius = 0.01, bool wait = true, int threshold = 0)
+        //{
+        //    var header = "def myProg():\n";
+        //    var end = "end\n";
+        //    var prog = header;
+        //    //    for idx, pose in enumerate(pose_list):
+        //    //        if idx == (len(pose_list) - 1):
+        //    //            radius = 0
+        //    //        prog += self._format_move(command, pose, acc, vel, radius, prefix = "p") + "\n"
+        //    //    prog += end
+        //    //    self.send_program(prog)
+        //    //    if wait:
+        //    //        self._wait_for_move(target = pose_list[-1], threshold = threshold)
+        //    //        return self.getl()
+        //}
 
         public void stopl(double acc = 0.5)
         {
@@ -362,20 +394,20 @@ namespace URX
             return rtmon;
         }
 
-        public void translate(int vect, double acc = 0.01, double vel = 0.01, bool wait = true, string command= "movel")
+        public double[] translate(double[] vect, double acc = 0.01, double vel = 0.01, bool wait = true, string command= "movel")
         {
             var p = getl();
             p[0] += vect[0];
             p[1] += vect[1];
             p[2] += vect[2];
-            //    return self.movex(command, p, vel=vel, acc=acc, wait=wait)
+            return movex(command, p, vel, acc, wait);
         }
 
         public void up(double z= 0.05, double acc = 0.01, double vel = 0.01)
         {
             var p = getl();
             p[2] += z;
-            //    self.movel(p, acc= acc, vel= vel)
+            movel(p, acc, vel);
         }
 
         public void down(double z = 0.05, double acc = 0.01, double vel = 0.01)

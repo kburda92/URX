@@ -45,8 +45,8 @@ namespace URX
             var t = new Transform();
             //    if not isinstance(vect, m3d.Vector):
             //        vect = m3d.Vector(vect)
-            //t.pos += vect;
-            //    return self.add_pose_tool(t, acc, vel, wait=wait, threshold=threshold)
+            t.pos += vect;
+            add_pose_tool(t, acc, vel, wait, "movel", threshold);
         }
 
         public void back(double z = 0.05, double acc = 0.01, double vel = 0.01)
@@ -58,8 +58,8 @@ namespace URX
         {
             //    if not isinstance(vect, m3d.Vector):
             //        vect = m3d.Vector(vect)
-            var trans = new Transform(get_orientation(), new Vector(vect))
-            //    return self.set_pose(trans, acc, vel, wait=wait, threshold=threshold)
+            var trans = new Transform(get_orientation(), new Vector(vect));
+            set_pose(trans, acc, vel, wait, "movel", threshold);
         }
 
         public void movec(int pose_via, int pose_to, double acc = 0.01, double vel = 0.01, bool wait= true, int threshold = 0)
@@ -74,8 +74,8 @@ namespace URX
         public void set_pose(Transform trans, double acc = 0.01, double vel= 0.01, bool wait = true, string command = "movel", int threshold = 0)
         {
             //    self.logger.debug("Setting pose to %s", trans.pose_vector)
-            //    t = self.csys* trans
-            //    pose = URRobot.movex(self, command, t.pose_vector, acc=acc, vel=vel, wait=wait, threshold=threshold)
+            var t = csys * trans;
+            var pose = base.movex(command, t.pose_vector, acc, vel, wait, threshold);
             //    if pose is not None:
             //        return self.csys.inverse* m3d.Transform(pose)
         }
@@ -83,18 +83,18 @@ namespace URX
         public void add_pose_base(Transform trans, double acc = 0.01, double vel = 0.01, bool wait = true, string command = "movel", int threshold = 0)
         {
             var pose = get_pose();
-            //return set_pose(trans * pose, acc, vel, wait, command, threshold);
+            set_pose(trans * pose, acc, vel, wait, command, threshold);
         }
 
         public void add_pose_tool(Transform trans, double acc = 0.01, double vel = 0.01, bool wait = true, string command = "movel", int threshold = 0)
         {
             var pose = get_pose();
-            //    return self.set_pose(pose* trans, acc, vel, wait = wait, command = command, threshold = threshold)
+            set_pose(pose * trans, acc, vel, wait, command, threshold);
         }
 
         public Transform get_pose(bool wait = false, bool _log = true)
         {
-            //    pose = URRobot.getl(self, wait, _log)
+            var pose = base.getl(wait, _log);
             //    trans = self.csys.inverse* m3d.Transform(pose)
             //    if _log:
             //        self.logger.debug("Returning pose to user: %s", trans.pose_vector)

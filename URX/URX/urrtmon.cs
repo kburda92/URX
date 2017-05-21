@@ -109,7 +109,7 @@ namespace URX
         }
         //getTCF = tcf_pose
 
-        public void tcf_force(bool wait = false, bool timestamp = false)
+        public double[] getTCFForce(bool wait = false, bool timestamp = false)
         {
             if (wait)
                 wait();
@@ -121,7 +121,7 @@ namespace URX
             //        else:
             //            return tcf_force
         }
-        //getTCFForce = tcf_force
+       
 
         //def __recv_rt_data(self):
         private void recv_rt_data()

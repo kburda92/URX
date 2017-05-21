@@ -72,7 +72,7 @@ namespace URX
             return value;
         }
 
-        private void set_analog_inputrange(int port, int vrange)
+        public void set_analog_inputrange(int port, int vrange)
         {
             //    if port in CONTROLLER_PORTS:
             //        assert(vrange in CONTROLLER_VOLTAGE)
@@ -82,7 +82,7 @@ namespace URX
             add_line_to_program(msg);
         }
 
-        private void set_analog_output(int input_id, int signal_level)
+        public void set_analog_output(int input_id, int signal_level)
         {
             //    assert(input_id in [0, 1])
             //    assert(signal_level in [0, 1])
@@ -90,14 +90,14 @@ namespace URX
             add_line_to_program(msg);
         }
 
-        private void set_analog_outputdomain(int port, int domain)
+        public void set_analog_outputdomain(int port, int domain)
         {
             //    assert(domain in OUTPUT_DOMAIN_VOLTAGE)
             string msg = string.Format("set_analog_outputdomain({0},{1})", port, domain);
             add_line_to_program(msg);
         }
 
-        private void set_payload(string mass, List<int> cog)
+        public void set_payload(double mass, List<int> cog = null)
         {
             string msg = string.Format("set_payload({0}", mass);
             if (cog.Count > 0)
@@ -110,7 +110,7 @@ namespace URX
 
         }
 
-        private void set_runstate_outputs(List<int> outputs)
+        public void set_runstate_outputs(List<int> outputs = null)
         {
             if (outputs == null)
                 outputs = new List<int>();
@@ -118,14 +118,14 @@ namespace URX
             add_line_to_program(msg);
         }
 
-        private void set_tool_voltage(int voltage)
+        public void set_tool_voltage(int voltage)
         {
             Debug.Assert(voltage == 0 || voltage == 12 || voltage == 24);
             var msg = string.Format("set_tool_voltage({})", voltage);
             add_line_to_program(msg);
         }
 
-        private void sleep(int value)
+        public void sleep(double value)
         {
             var msg = string.Format("sleep({0})", value);
             add_line_to_program(msg);

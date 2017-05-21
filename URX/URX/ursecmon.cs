@@ -6,8 +6,12 @@ using System.Threading.Tasks;
 
 namespace URX
 {
-    class ParsingException
+    class ParsingException : Exception
     {
+        public ParsingException(string message) : base(message)
+        {
+
+        }
     }
 
     class Program
@@ -164,10 +168,10 @@ namespace URX
             //        return struct.unpack("!iB", data[0:5])
         }
 
-        public void analyze_header(int data)
+        public void analyze_header(int[] data)
         {
-            //        if len(data) < 5:
-            //            raise ParsingException("Packet size %s smaller than header size (5 bytes)" % len(data))
+            if (data.Length < 5)
+                throw new ParsingException(string.Format("Packet size %s smaller than header size (5 bytes)", data.Length));
             //        else:
             //            psize, ptype = self.get_header(data)
             //            if psize< 5:
@@ -179,8 +183,8 @@ namespace URX
 
         public void find_first_packet(int data)
         {
-            //        counter = 0
-            //        limit = 10
+            int counter = 0;
+            int limit = 10;
             //        while True:
             //            if len(data) >= 5:
             //                psize, ptype = self.get_header(data)
@@ -234,14 +238,14 @@ namespace URX
             wait();  
         }
 
-        public void send_program(int prog)
+        public void send_program(string prog)
         {
         //    prog.strip()
         //self.logger.debug("Enqueueing program: %s", prog)
         //if not isinstance(prog, bytes):
         //    prog = prog.encode()
 
-        //data = Program(prog + b"\n")
+        var data = Program(prog + b"\n");
         //with data.condition:
         //    with self._prog_queue_lock:
         //    self._prog_queue.append(data)
@@ -318,7 +322,7 @@ namespace URX
         //        raise TimeoutException("Did not receive a valid data packet from robot in {}".format(timeout))
         }
 
-        public Vector get_cartesian_info(bool wait = false)
+        public Dictionary<string, int> get_cartesian_info(bool wait = false)
         {
             if (wait)
                 this.wait();
