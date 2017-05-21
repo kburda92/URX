@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace URX
 {
-    class RobotiqScript //: public URScript
+    class RobotiqScript : URScript
     {
         const string SOCKET_HOST = "127.0.0.1";
         const int SOCKET_PORT = 63352;
@@ -16,10 +16,9 @@ namespace URX
         int socket_port = 63352;
         string socket_name = "gripper_socket";
 
-        public RobotiqScript(string socket_host = SOCKET_HOST, int socket_port = SOCKET_PORT, string socket_name = SOCKET_NAME)
+        public RobotiqScript(string socket_host = SOCKET_HOST, int socket_port = SOCKET_PORT, string socket_name = SOCKET_NAME) :
+            base()
         {
-            //super(RobotiqScript, self).__init__()
-
         //# Reset connection to gripper
         //    self._socket_close(self.socket_name)
         //self._socket_open(self.socket_host, self.socket_port, self.socket_name)

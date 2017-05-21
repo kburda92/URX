@@ -78,8 +78,8 @@ namespace URX
             //        assert(vrange in CONTROLLER_VOLTAGE)
             //    elif port in TOOL_PORTS:
             //        assert(vrange in TOOL_VOLTAGE)
-            //    msg = b"set_analog_inputrange({},{})".format(port, vrange)
-            //    self.add_line_to_program(msg)
+            var msg = string.Format("set_analog_inputrange({0},{1})", port, vrange);
+            add_line_to_program(msg);
         }
 
         private void set_analog_output(int input_id, int signal_level)
@@ -157,7 +157,7 @@ namespace URX
             sync();
         }
 
-        private void ocket_send_string(string message, string socket_name)
+        private void socket_send_string(string message, string socket_name)
         {
             var msg = string.Format("socket_send_string(\"{}\",\"{}\")", message, socket_name);
             add_line_to_program(msg);

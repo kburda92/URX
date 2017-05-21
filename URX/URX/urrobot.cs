@@ -6,51 +6,42 @@ using System.Threading.Tasks;
 
 namespace URX
 {
-    class RobotException
+    public class RobotException
     {
     }
 
-    class URRobot
+    public class URRobot
     {
-        string host;
-        int csys;
+        public string host;
+        protected Transform csys;
+        public double joinEpsilon = 0.01;
+        public int max_float_length = 6;
+        public SecondaryMonitor secmon;
+        public URRTMonitor rtmon;
         public URRobot(string host, bool use_rt = false)
         {
             //    self.logger = logging.getLogger("urx")
             this.host = host;
-            csys = 0;
 
             //    self.logger.debug("Opening secondary monitor socket")
-            //    self.secmon = ursecmon.SecondaryMonitor(self.host)  # data from robot at 10Hz
-
-            //    self.rtmon = None
-            //    if use_rt:
-            //        self.rtmon = self.get_realtime_monitor()
-            //    # precision of joint movem used to wait for move completion
-            //    # the value must be conservative! otherwise we may wait forever
-            //    self.joinEpsilon = 0.01
-            //    # It seems URScript is  limited in the character length of floats it accepts
-            //    self.max_float_length = 6  # FIXME: check max length!!!
-
-            //    self.secmon.wait()  # make sure we get data from robot before letting clients access our methods
+            secmon = new SecondaryMonitor(host);
+            rtmon = get_realtime_monitor();
+            secmon.wait();
         }
 
         public override string ToString()
         {
-            return "";
-            //return "Robot Object (IP=%s, state=%s)" % (self.host, self.secmon.get_all_data()["RobotModeData"])
+            return string.Format("Robot Object (IP={0}, state={1})", host, secmon.get_all_data()["RobotModeData"]);
         }
 
         public bool is_running()
         {
-            return true;
-            //    return self.secmon.running
+            return secmon.running;
         }
 
         public bool is_program_running()
         {
-            return true;
-            //return self.secmon.is_program_running()
+            return secmon.is_program_running();
         }
 
         public void send_program(string prog)
@@ -75,82 +66,82 @@ namespace URX
 
         public void set_tcp(int tcp)
         {
-            string prog = "";// "set_tcp(p[{}, {}, {}, {}, {}, {}])".format(*tcp)
+            var prog = string.Format("set_tcp(p[{0}, {1}, {2}, {3}, {4}, {5}])", tcp);
             send_program(prog);
         }
 
-        public void set_payload(double weight, int cog = 0)
+        public void set_payload(double weight, List<double> cog)
         {
             string prog = "";
-            //    if cog:
-            //        cog = list(cog)
-            //        cog.insert(0, weight)
-            //        prog = "set_payload({}, ({},{},{}))".format(*cog)
-            //    else:
-            //        prog = "set_payload(%s)" % weight
-            send_program(prog)
+            if (cog != null)
+            {
+                cog.Add(weight);
+                prog = string.Format("set_payload({0}, ({1},{2},{3}))", cog);
+            }
+            else
+                prog = string.Format("set_payload({0})", weight);
+            send_program(prog);
         }
 
-        public void set_gravity(int vector)
+        public void set_gravity(Vector vector)
         {
-            string prog = "";// = "set_gravity(%s)" % list(vector)
+            string prog = string.Format("set_gravity({0})", vector);
             send_program(prog);
         }
 
         public void set_gravity(string msg)
         {
-            string prog = "";//"textmsg(%s)" % msg
+            string prog = string.Format("textmsg(% s)", msg);
             send_program(prog);
         }
 
         public void set_digital_out(string output, bool val)
         {
-            //    if val in (True, 1):
-            //        val = "True"
-            //    else:
-            //        val = "False"
-            //    self.send_program('digital_out[%s]=%s' % (output, val))
+            string Val= "False";
+            if (val)
+                Val = "True";
+            send_program(string.Format("digital_out[{0}]={1}", output, Val));
         }
 
         public void get_analog_inputs()
         {
-            //    return self.secmon.get_analog_inputs()
+            return secmon.get_analog_inputs();
         }
 
         public void get_analog_in(int nb, bool wait = false)
         {
-            //    return self.secmon.get_analog_in(nb, wait=wait)
+            return secmon.get_analog_in(nb, wait);
         }
 
         public void get_digital_in_bits()
         {
-            //    return self.secmon.get_digital_in_bits()
+            return self.secmon.get_digital_in_bits();
         }
 
         public void get_digital_in(int nb, bool wait = false)
         {
-            //    return self.secmon.get_digital_in(nb, wait)
+            return secmon.get_digital_in(nb, wait);
         }
 
         public void get_digital_out(int val, bool wait = false)
         {
-            //    return self.secmon.get_digital_out(val, wait=wait)
+            return secmon.get_digital_out(val, wait);
         }
 
         public void get_digital_out_bits(bool wait = false)
         {
-            //    return self.secmon.get_digital_out_bits(wait=wait)
+            return secmon.get_digital_out_bits(wait);
         }
 
         public void set_analog_out(int output, int val)
         {
-            string prog = "";//set_analog_out(%s, %s)" % (output, val)
+            var prog = string.Format("set_analog_out({0}, {1})", output, val);
             send_program(prog);
         }
 
         public void set_analog_out(int val)
         {
-            string prog = "";// "set_tool_voltage(%s)" % (val);
+            var prog = string.Format("set_tool_voltage(%s)", val);
             send_program(prog);
         }
 
@@ -182,10 +173,10 @@ namespace URX
 
         private void get_dist(int target, bool joints = false)
         {
-            //    if joints:
-            //        return get_joints_dist(target)
-            //    else:
-            //        return get_lin_dist(target)
+            if (joints)
+                return get_joints_dist(target);
+            else
+                return get_lin_dist(target);
         }
 
         private void get_lin_dist(int target)
@@ -264,11 +255,11 @@ namespace URX
 
         public void movex(string command, int tpose, double acc= 0.01, double vel = 0.01, bool wait = true, bool relative = false, int threshold = 0)
         {
-            //    if relative:
-
-            //       l = self.getl()
-
-            //       tpose = [v + l[i] for i, v in enumerate(tpose)]
+            if(relative)
+            {
+                var l = getl();
+                //var tpose = [v + l[i] for i, v in enumerate(tpose)];
+            }
 
             //   prog = self._format_move(command, tpose, acc, vel, prefix = "p")
 
@@ -278,14 +269,14 @@ namespace URX
             //        return self.getl()
         }
 
-        public void getl(bool wait = false, bool _log = true)
+        public Vector getl(bool wait = false, bool _log = true)
         {
-            //    pose = self.secmon.get_cartesian_info(wait)
+            var pose = secmon.get_cartesian_info(wait);
             //    if pose:
             //        pose = [pose["X"], pose["Y"], pose["Z"], pose["Rx"], pose["Ry"], pose["Rz"]]
             //    if _log:
             //        self.logger.debug("Received pose from robot: %s", pose)
-            //    return pose
+            return pose;
         }
 
         public void movec(int pose_via, int pose_to, double acc = 0.01, double vel = 0.01, bool wait = true, int threshold = 0)
@@ -338,9 +329,9 @@ namespace URX
         public void close()
         {
             //    self.logger.info("Closing sockets to robot")
-            //    self.secmon.close()
-            //    if self.rtmon:
-            //        self.rtmon.stop()
+            secmon.close();
+            if (rtmon != null)
+                rtmon.stop();
         }
 
         public void set_freedrive(bool val)
@@ -359,29 +350,31 @@ namespace URX
                 send_program("set real");
         }
 
-        public void get_realtime_monitor()
+        public URRTMonitor get_realtime_monitor()
         {
-            //    if not self.rtmon:
-            //        self.logger.info("Opening real-time monitor socket")
-            //        self.rtmon = urrtmon.URRTMonitor(self.host)  # som information is only available on rt interface
-            //        self.rtmon.start()
-            //    self.rtmon.set_csys(self.csys)
-            //    return self.rtmon
+            if(rtmon == null)
+            {
+                //        self.logger.info("Opening real-time monitor socket")
+                //        self.rtmon = urrtmon.URRTMonitor(self.host)  # som information is only available on rt interface
+                //        self.rtmon.start()
+            }
+            rtmon.set_csys(csys);
+            return rtmon;
         }
 
         public void translate(int vect, double acc = 0.01, double vel = 0.01, bool wait = true, string command= "movel")
         {
-            //    p = self.getl()
-            //    p[0] += vect[0]
-            //    p[1] += vect[1]
-            //    p[2] += vect[2]
+            var p = getl();
+            p[0] += vect[0];
+            p[1] += vect[1];
+            p[2] += vect[2];
             //    return self.movex(command, p, vel=vel, acc=acc, wait=wait)
         }
 
         public void up(double z= 0.05, double acc = 0.01, double vel = 0.01)
         {
-            //    p = self.getl()
-            //    p[2] += z
+            var p = getl();
+            p[2] += z;
             //    self.movel(p, acc= acc, vel= vel)
         }
 

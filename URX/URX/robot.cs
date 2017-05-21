@@ -6,59 +6,55 @@ using System.Threading.Tasks;
 
 namespace URX
 {
-    public class Robot
+    public class Robot : URRobot
     {
-        public robot(string host, bool use_rt = false)
+        public Robot(string host, bool use_rt = false) : base(host, use_rt)
         {
-            //URRobot.__init__(self, host, use_rt)
-            //self.csys = m3d.Transform()
+            csys = new Transform();
         }
 
-        private void get_lin_dist(int target)
+        private void get_lin_dist(Transform target)
         {
-            //pose = URRobot.getl(self, wait = True)
-            //target = m3d.Transform(target)
-            //pose = m3d.Transform(pose)
-            //return pose.dist(target)
+            var pose = base.getl(true);
+            target = new Transform(/*target*/);
+            pose = new Transform(/*pose*/);
+            return pose.dist(target);
         }
 
         public void set_tcp(int tcp)
         {
             //    if isinstance(tcp, m3d.Transform):
             //        tcp = tcp.pose_vector
-            //    URRobot.set_tcp(self, tcp)
+            base.set_tcp(tcp);
         }
 
-        public void set_csys(int transform)
+        public void set_csys(Transform transform)
         {
-            //    self.csys = transform
+            csys = transform;
         }
 
-        public void set_orientation(int orient, double acc = 0.01, double vel = 0.01, bool wait = true, int threshold = 0)
+        public void set_orientation(Orientation orient, double acc = 0.01, double vel = 0.01, bool wait = true, int threshold = 0)
         {
-            //    if not isinstance(orient, m3d.Orientation):
-            //        orient = m3d.Orientation(orient)
-            //    trans = self.get_pose()
-            //    trans.orient = orient
-            //    self.set_pose(trans, acc, vel, wait= wait, threshold= threshold)
+            var trans = get_pose();
+            trans.orient = orient;
+            set_pose(trans, acc, vel, wait, "movel", threshold);
         }
 
-        public void translate_tool(int vect, double acc = 0.01, double vel = 0.01, bool wait = true, int threshold = 0)
+        public void translate_tool(Vector vect, double acc = 0.01, double vel = 0.01, bool wait = true, int threshold = 0)
         {
-            //    t = m3d.Transform()
+            var t = new Transform();
             //    if not isinstance(vect, m3d.Vector):
             //        vect = m3d.Vector(vect)
-            //    t.pos += vect
+            //t.pos += vect;
             //    return self.add_pose_tool(t, acc, vel, wait=wait, threshold=threshold)
         }
 
         public void back(double z = 0.05, double acc = 0.01, double vel = 0.01)
-        {
-            int a = 0;
-            translate_tool(/*(0, 0, -z)*/a, acc, vel);
+        {   
+            translate_tool(new Vector(new int [3]{0, 0, -z}), acc, vel);
         }
 
-        public void set_pos(int vect, double acc = 0.01, double vel = 0.01, bool wait = true, int threshold = 0)
+        public void set_pos(Vector vect, double acc = 0.01, double vel = 0.01, bool wait = true, int threshold = 0)
         {
             //    if not isinstance(vect, m3d.Vector):
             //        vect = m3d.Vector(vect)
@@ -75,7 +71,7 @@ namespace URX
             //        return self.csys.inverse* m3d.Transform(pose)
         }
 
-        public void set_pose(int trans, double acc = 0.01, double vel= 0.01, bool wait = true, string command = "movel", int threshold = 0)
+        public void set_pose(Transform trans, double acc = 0.01, double vel= 0.01, bool wait = true, string command = "movel", int threshold = 0)
         {
             //    self.logger.debug("Setting pose to %s", trans.pose_vector)
             //    t = self.csys* trans
@@ -84,37 +80,38 @@ namespace URX
             //        return self.csys.inverse* m3d.Transform(pose)
         }
 
-        public void add_pose_base(int trans, double acc = 0.01, double vel = 0.01, bool wait = true, string command = "movel", int threshold = 0)
+        public void add_pose_base(Transform trans, double acc = 0.01, double vel = 0.01, bool wait = true, string command = "movel", int threshold = 0)
         {
-            //    pose = self.get_pose()
-            //    return self.set_pose(trans* pose, acc, vel, wait = wait, command = command, threshold = threshold)
+            var pose = get_pose();
+            //return set_pose(trans * pose, acc, vel, wait, command, threshold);
         }
 
-        public void add_pose_tool(int trans, double acc = 0.01, double vel = 0.01, bool wait = true, string command = "movel", int threshold = 0)
+        public void add_pose_tool(Transform trans, double acc = 0.01, double vel = 0.01, bool wait = true, string command = "movel", int threshold = 0)
         {
-            //    pose = self.get_pose()
+            var pose = get_pose();
             //    return self.set_pose(pose* trans, acc, vel, wait = wait, command = command, threshold = threshold)
         }
 
-        public void get_pose(bool wait = false, bool _log = true)
+        public Transform get_pose(bool wait = false, bool _log = true)
         {
             //    pose = URRobot.getl(self, wait, _log)
             //    trans = self.csys.inverse* m3d.Transform(pose)
             //    if _log:
             //        self.logger.debug("Returning pose to user: %s", trans.pose_vector)
             //    return trans
+            return new Transform();
         }
 
-        public void get_orientation(bool wait = false)
+        public Orientation get_orientation(bool wait = false)
         {
-            //    trans = self.get_pose(wait)
-            //    return trans.orient
+            var trans = get_pose(wait);
+            return trans.orient;
         }
 
-        public void get_pos(bool wait = false)
+        public Vector get_pos(bool wait = false)
         {
-            //    trans = self.get_pose(wait)
-            //    return trans.pos
+            var trans = get_pose(wait);
+            return trans.pos;
         }
 
         public void speedl(int velocities, double acc, int min_time)
@@ -162,23 +159,23 @@ namespace URX
             //return movex_tool("movel", pose, acc, vel, wait, threshold)
         }
 
-        public void movex_tool(string command, int pose, double acc = 0.01, double vel = 0.01, bool wait = true, int threshold = 0)
+        public void movex_tool(string command, Vector pose, double acc = 0.01, double vel = 0.01, bool wait = true, int threshold = 0)
         {
-            //    t = m3d.Transform(pose)
-            //    self.add_pose_tool(t, acc, vel, wait=wait, command=command, threshold=threshold)
+            var t = new Transform(/*pose*/);
+            add_pose_tool(t, acc, vel, wait, command, threshold);
         }
 
         public void getl(bool wait = false, bool _log = true)
         {
-            //    t = self.get_pose(wait, _log)
-            //    return t.pose_vector.tolist()
+            var t = get_pose(wait, _log);
+            return t.pose_vector.tolist();
         }
 
-        public void set_gravity(int vector)
+        public void set_gravity(Vector vector)
         {
             //    if isinstance(vector, m3d.Vector):
             //        vector = vector.list
-            //    return URRobot.set_gravity(self, vector)
+            base.set_gravity(vector);
         }
 
         public void new_csys_from_xpy()
@@ -215,10 +212,9 @@ namespace URX
             get { return _x; }
             set
             {
-                //def x(self, val):
-                //    p = self.get_pos()
-                //    p.x = val
-                //    self.set_pos(p)
+                var p = get_pos();
+                p.x = value;
+                set_pos(p);
             }
         }
 
@@ -228,9 +224,9 @@ namespace URX
             get { return _y; }
             set
             {
-                //    p = self.get_pos()
-                //    p.y = val
-                //    self.set_pos(p)
+                var p = get_pos();
+                p.y = value;
+                set_pos(p);
             }
         }
 
@@ -240,9 +236,9 @@ namespace URX
             get { return _z; }
             set
             {
-                //    p = self.get_pos()
-                //    p.z = val
-                //    self.set_pos(p)
+                var p = get_pos();
+                p.z = value;
+                set_pos(p);
             }
         }
 
@@ -252,9 +248,9 @@ namespace URX
             get { return 0; }
             set
             {
-                //    p = self.get_pose()
-                //    p.orient.rotate_xb(val)
-                //    self.set_pose(p)
+                var p = get_pose();
+                p.orient.rotate_xb(value);
+                set_pose(p);
             }
         }
 
@@ -264,9 +260,9 @@ namespace URX
             get { return 0; }
             set
             {
-                //    p = self.get_pose()
-                //    p.orient.rotate_yb(val)
-                //    self.set_pose(p)
+                var p = get_pose();
+                p.orient.rotate_yb(value);
+                set_pose(p);
             }
         }
 
@@ -276,9 +272,9 @@ namespace URX
             get { return 0; }
             set
             {
-                //    p = self.get_pose()
-                //    p.orient.rotate_zb(val)
-                //    self.set_pose(p)
+                var p = get_pose();
+                p.orient.rotate_zb(value);
+                set_pose(p);
             }
         }
 
@@ -288,9 +284,9 @@ namespace URX
             get { return 0; }
             set
             {
-                //    t = m3d.Transform()
-                //    t.pos.x += val
-                //    self.add_pose_tool(t)
+                var t = new Transform();
+                t.pos.x += value;
+                add_pose_tool(t);
             }
         }
 
@@ -300,9 +296,9 @@ namespace URX
             get { return 0; }
             set
             {
-                //    t = m3d.Transform()
-                //    t.pos.y += val
-                //    self.add_pose_tool(t)
+                var t = new Transform();
+                t.pos.y += value;
+                add_pose_tool(t);
             }
         }
 
@@ -312,9 +308,9 @@ namespace URX
             get { return 0; }
             set
             {
-                //    t = m3d.Transform()
-                //    t.pos.z += val
-                //    self.add_pose_tool(t)
+                var t = new Transform();
+                t.pos.z += value;
+                add_pose_tool(t);
             }
         }
 
@@ -324,9 +320,9 @@ namespace URX
             get { return 0; }
             set
             {
-                //    t = m3d.Transform()
-                //    t.orient.rotate_xb(val)
-                //    self.add_pose_tool(t)
+                var t = new Transform();
+                t.orient.rotate_xb(value);
+                add_pose_tool(t);
             }
         }
 
@@ -336,9 +332,9 @@ namespace URX
             get { return 0; }
             set
             {
-                //    t = m3d.Transform()
-                //    t.orient.rotate_yb(val)
-                //    self.add_pose_tool(t)
+                var t = new Transform();
+                t.orient.rotate_yb(value);
+                add_pose_tool(t);
             }
         }
 
@@ -348,9 +344,9 @@ namespace URX
             get { return 0; }
             set
             {
-                //    t = m3d.Transform()
-                //    t.orient.rotate_zb(val)
-                //    self.add_pose_tool(t)
+                var t = new Transform();
+                t.orient.rotate_zb(value);
+                add_pose_tool(t);
             }
         }
     }

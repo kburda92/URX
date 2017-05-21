@@ -318,15 +318,16 @@ namespace URX
         //        raise TimeoutException("Did not receive a valid data packet from robot in {}".format(timeout))
         }
 
-        public void get_cartesian_info(bool wait = false)
+        public Vector get_cartesian_info(bool wait = false)
         {
             if (wait)
                 this.wait();
-        //with self._dictLock:
-        //    if "CartesianInfo" in self._dict:
-        //        return self._dict["CartesianInfo"]
-        //    else:
-        //        return None
+            //with self._dictLock:
+            //    if "CartesianInfo" in self._dict:
+            //        return self._dict["CartesianInfo"]
+            //    else:
+            //        return None
+            return null;
         }
 
         public void get_all_data(bool wait = false)
@@ -406,8 +407,9 @@ namespace URX
             //return self._dict["MasterBoardData"]["analogInput0"], self._dict["MasterBoardData"]["analogInput1"]
         }
 
-        public void is_program_running(bool wait = false)
+        public bool is_program_running(bool wait = false)
         {
+            return true;
             if (wait)
                 this.wait();
             //with self._dictLock:
@@ -417,7 +419,7 @@ namespace URX
         public void close()
         {
             trystop = true;
-            //join();
+            join();
             //if self._s_secondary:
             //with self._prog_queue_lock:
             //self._s_secondary.close()

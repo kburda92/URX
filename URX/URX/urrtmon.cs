@@ -9,11 +9,12 @@ namespace URX
     //rtstruct692 = struct.Struct('>d6d6d6d6d6d6d6d6d18d6d6d6dQ')
     //rtstruct540 = struct.Struct('>d6d6d6d6d6d6d6d6d18d')
 
-    class URRTMonitor
+    public class URRTMonitor
     {
         public bool daemon;
         private bool stop_event, buffering;
         string urHost;
+        private Transform csys;
         public URRTMonitor(string urHost)
         {
             //threading.Thread.__init__(self)
@@ -37,14 +38,13 @@ namespace URX
             buffering = false;
             //self._buffer_lock = threading.Lock()
             //self._buffer = []
-            //self._csys = None
             //self._csys_lock = threading.Lock()
         }
 
-        public void set_csys(int csys)
+        public void set_csys(Transform csys)
         {
             //    with self._csys_lock:
-            //        self._csys = csys
+            this.csys = csys;
         }
 
 
