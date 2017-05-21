@@ -9,32 +9,32 @@ namespace URX
     public class Vector
     {
         public static Vector ex, ey, ez, e0, e1, e2;
-        public int[] data;
-        public Vector(int[] values = null)
+        public double[] data;
+        public Vector(double[] values = null)
         {
-            ex = e0 = new Vector(new int[3] { 1, 0, 0 });
-            ey = e1 = new Vector(new int[3] { 0, 1, 0 });
-            ez = e2 = new Vector(new int[3] { 0, 0, 1 });
+            ex = e0 = new Vector(new double[3] { 1, 0, 0 });
+            ey = e1 = new Vector(new double[3] { 0, 1, 0 });
+            ez = e2 = new Vector(new double[3] { 0, 0, 1 });
 
             if (values == null)
-                data = new int[3] { 0, 0, 0 };
+                data = new double[3] { 0, 0, 0 };
             else
                 data = values;
         }
 
-        public int x
+        public double x
         {
             get { return data[0]; }
             set { data[0] = value; }
         }
 
-        public int y
+        public double y
         {
             get { return data[1]; }
             set { data[1] = value; }
         }
 
-        public int z
+        public double z
         {
             get { return data[2]; }
             set { data[2] = value; }
@@ -44,12 +44,12 @@ namespace URX
     }
     public class Orientation
     {
-        public int[,] data;
-        public Orientation(int[,] values = null)
+        public double[,] data;
+        public Orientation(double[,] values = null)
         {
             if (values == null)
             {
-                data = new int[3, 3]
+                data = new double[3, 3]
                 {
                     { 1, 0, 0 },
                     { 0, 1, 0 },
@@ -107,10 +107,10 @@ namespace URX
     }
     public class Transform
     {
-        private int[,] data;
-        public Transform(int [,] matrix = null)
+        private double[,] data;
+        public Transform(double[,] matrix = null)
         {
-            data = new int[4, 4]
+            data = new double[4, 4]
             {
                 {1,0,0,0},
                 {0,1,0,0},
@@ -124,7 +124,7 @@ namespace URX
             }
             else
             {
-                int[,] orient = new int[3, 3];
+                double[,] orient = new double[3, 3];
                 for (int i = 0; i < 3; i++)
                 {
                     for (int j = 0; j < 3; j++)
@@ -132,7 +132,7 @@ namespace URX
                 }
                 o = new Orientation(orient);
 
-                int[] vec = new int[3];
+                double[] vec = new double[3];
                 for (int i = 0; i < 3; i++)
                 {
                     vec[i] = matrix[i, 3];
@@ -143,8 +143,13 @@ namespace URX
         }
         public static Transform operator *(Transform lhs, Transform rhs)
         {
-
-            return new Transform();
+            double[,] result = new double[4, 4];
+            for (int i = 0; i < 4; i++)
+            {
+                for(int j=0;j<4;j++)
+                    result[i,j] = lhs.data[i,j] * rhs.data[j,i];
+            }
+            return new Transform(result);
         }
 
         private Orientation o;

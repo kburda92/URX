@@ -58,7 +58,7 @@ namespace URX
         {
             //    if not isinstance(vect, m3d.Vector):
             //        vect = m3d.Vector(vect)
-            //    trans = m3d.Transform(self.get_orientation(), m3d.Vector(vect))
+            var trans = new Transform(get_orientation(), new Vector(vect))
             //    return self.set_pose(trans, acc, vel, wait=wait, threshold=threshold)
         }
 
