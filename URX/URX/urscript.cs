@@ -30,11 +30,17 @@ namespace URX
         byte[] header = new byte[100];
         byte[] program = new byte[100];
 
+        private Logger logger;
+        public URScript()
+        {
+            logger = new URX.Logger("urscript");
+        }
+
         public string call()
         {
             if(program.Length == 0)
             {
-                //        self.logger.debug(u"urscript program is empty")
+                logger.debug("urscript program is empty");
                 return "";
             }
 

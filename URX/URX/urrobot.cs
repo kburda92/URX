@@ -22,12 +22,13 @@ namespace URX
         public int max_float_length = 6;
         public SecondaryMonitor secmon;
         public URRTMonitor rtmon;
+        public Logger logger;
         public URRobot(string host, bool use_rt = false)
         {
-            //    self.logger = logging.getLogger("urx")
+            logger = new Logger("urx");
             this.host = host;
 
-            //    self.logger.debug("Opening secondary monitor socket")
+            logger.debug("Opening secondary monitor socket");
             secmon = new SecondaryMonitor(host);
             rtmon = get_realtime_monitor();
             secmon.wait();
@@ -50,7 +51,7 @@ namespace URX
 
         public void send_program(string prog)
         {
-            //    self.logger.info("Sending program: " + prog)
+           logger.info("Sending program: " + prog);
            secmon.send_program(prog);
         }
 
@@ -152,14 +153,16 @@ namespace URX
 
         private void wait_for_move(double[] target, double threshold, int timeout = 5, bool joints = false)
         {
-            //    self.logger.debug("Waiting for move completion using threshold %s and target %s", threshold, target)
+            logger.debug(string.Format("Waiting for move completion using threshold {0} and target {1}", threshold, target));
             var start_dist = get_dist(target, joints);
             if (threshold == 0)
             {
                 threshold = start_dist * 0.8;
                 if (threshold < 0.001)
+                {
                     threshold = 0.001;
-                //        self.logger.debug("No threshold set, setting it to %s", threshold)
+                    logger.debug(string.Format("No threshold set, setting it to %s", threshold));
+                }
             }
             int count = 0;
             while(true)
@@ -171,7 +174,7 @@ namespace URX
                 {
                     if (dist < threshold)
                     {
-                        //                self.logger.debug("we are threshold(%s) close to target, move has ended", threshold)
+                        logger.debug(string.Format("we are threshold({0}) close to target, move has ended", threshold));
                         return;
                     }
                     count += 1;
@@ -304,8 +307,8 @@ namespace URX
                 _pose[5] = pose["Rz"];
 
             }
-            //    if _log:
-            //        self.logger.debug("Received pose from robot: %s", pose)
+            if (_log)
+                logger.debug(string.Format("Received pose from robot: %s", pose));
             return _pose;
         }
 
@@ -360,7 +363,7 @@ namespace URX
 
         public void close()
         {
-            //    self.logger.info("Closing sockets to robot")
+            logger.info("Closing sockets to robot");
             secmon.close();
             if (rtmon != null)
                 rtmon.stop();
@@ -386,9 +389,9 @@ namespace URX
         {
             if(rtmon == null)
             {
-                //        self.logger.info("Opening real-time monitor socket")
-                //        self.rtmon = urrtmon.URRTMonitor(self.host)  # som information is only available on rt interface
-                //        self.rtmon.start()
+                logger.info("Opening real-time monitor socket");
+                rtmon = new URRTMonitor(host);
+                rtmon.start();
             }
             rtmon.set_csys(csys);
             return rtmon;

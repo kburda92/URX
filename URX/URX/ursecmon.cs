@@ -36,9 +36,10 @@ namespace URX
 
     class ParserUtils
     {
+        private Logger logger;
         public ParserUtils()
         {
-            //        self.logger = logging.getLogger("ursecmon")
+            logger = new Logger("ursecmon");
             //        self.version = (0, 0)
         }
 
@@ -116,9 +117,9 @@ namespace URX
             //                elif tmp["robotMessageType"] == 5:
             //                    allData["keyMessage"] = self._get_data(pdata, "!iBQbb iiAc", ("size", "type", "timestamp", "source", "robotMessageType", "code", "argument", "messageText"))
             //                else:
-            //                    self.logger.debug("Message type parser not implemented %s", tmp)
+                                    logger.debug(string.Format("Message type parser not implemented {0}", tmp));
             //            else:
-            //                self.logger.debug("Unknown packet type %s with size %s", ptype, psize)
+                              logger.debug(string.Format("Unknown packet type {0} with size {1}", ptype, psize));
 
             //        return allData
 
@@ -181,33 +182,59 @@ namespace URX
             //        return psize, ptype, data[:psize], data[psize:]
         }
 
-        public void find_first_packet(int data)
+        public void find_first_packet(List<byte> data, out List<byte> first, out List<byte> second)
         {
             int counter = 0;
             int limit = 10;
-            //        while True:
-            //            if len(data) >= 5:
-            //                psize, ptype = self.get_header(data)
-            //                if psize< 5 or psize> 2000 or ptype != 16:
-            //                    data = data[1:]
-            //                    counter += 1
-            //                    if counter > limit:
-            //                        self.logger.warning("tried %s times to find a packet in data, advertised packet size: %s, type: %s", counter, psize, ptype)
-            //                        self.logger.warning("Data length: %s", len(data))
-            //                        limit = limit* 10
-            //                elif len(data) >= psize:
-            //                    self.logger.debug("Got packet with size %s and type %s", psize, ptype)
-            //                    if counter:
-            //                        self.logger.info("Remove %s bytes of garbage at begining of packet", counter)
-            //                    # ok we we have somehting which looks like a packet"
-            //                    return (data[:psize], data[psize:])
-            //                else:
-            //                    # packet is not complete
-            //                    self.logger.debug("Packet is not complete, advertised size is %s, received size is %s, type is %s", psize, len(data), ptype)
-            //                    return None
-            //            else:
-            //                # self.logger.debug("data smaller than 5 bytes")
-            //                return None
+            int psize = 0;
+            int ptype = 0;
+            while(true)
+            {
+                if(data.Count >= 5)
+                {
+                    //psize, ptype = self.get_header(data)
+                    if(psize < 5 || psize > 200 || ptype != 16)
+                    {
+                        data.RemoveAt(0);
+                        counter++;
+                        if(counter > limit)
+                        {
+                            logger.warning(string.Format("tried {0} times to find a packet in data, advertised packet size: {1}, type: {2}", counter, psize, ptype));
+                            logger.warning(string.Format("Data length: {0}", data.Count));
+                            limit *= 10;
+                        }
+                    }
+                    else if(data.Count >= psize)
+                    {
+                        logger.debug(string.Format("Got packet with size {0} and type {1}", psize, ptype));
+                        if (counter > 0)
+                            logger.info(string.Format("Remove {0} bytes of garbage at begining of packet", counter));
+
+                        first = new List<byte>();
+                        second = new List();
+                        foreach (var i in data)
+                        {
+                            if (i < psize)
+                                first.Add(i);
+                            else
+                                second.Add(i);
+                        }
+                    }
+                    else
+                    {
+                        // packet is not complete
+                        logger.debug(string.Format("Packet is not complete, advertised size is {0}, received size is {1}, type is {2}"), psize, len(data), ptype);
+                        first = null;
+                        second = null;
+                    }
+                }
+                else
+                {
+                    //                # self.logger.debug("data smaller than 5 bytes")
+                    first = null;
+                    second = null;
+                }
+            }
         }
     }
 
@@ -218,20 +245,23 @@ namespace URX
         public string host;
         private bool trystop = false;
         public bool running = false;
+        private Logger logger;
         public int lastpacket_timestamp = 0;
+        private List<byte> dataqueue;
 
         public SecondaryMonitor(string host)
         {
             //    Thread.__init__(self)
-            //self.logger = logging.getLogger("ursecmon")
+            logger = new Logger("ursecmon");
             parser = new ParserUtils();
+
             //    self._dictLock = Lock()
             this.host = host;
             int secondary_port = 30002;
             //self._s_secondary = socket.create_connection((self.host, secondary_port), timeout = 0.5)
             //self._prog_queue = []
             //self._prog_queue_lock = Lock()
-            //self._dataqueue = bytes()
+            dataqueue = new List<byte>();
             //self._dataEvent = Condition()
 
             start();
@@ -255,62 +285,73 @@ namespace URX
 
         public void run()
         {
-//            while not self._trystop:
-//            with self._prog_queue_lock:
-//            if len(self._prog_queue) > 0:
-//                    data = self._prog_queue.pop(0)
-//                    self._s_secondary.send(data.program)
-//                    with data.condition:
-//            data.condition.notify_all()
+            //            while not self._trystop:
+            //            with self._prog_queue_lock:
+            //            if len(self._prog_queue) > 0:
+            //                    data = self._prog_queue.pop(0)
+            //                    self._s_secondary.send(data.program)
+            //                    with data.condition:
+            //            data.condition.notify_all()
 
-//            data = self._get_data()
-//            try:
-//                tmpdict = self._parser.parse(data)
-//                with self._dictLock:
-//            self._dict = tmpdict
-//            except ParsingException as ex:
-//                self.logger.warning("Error parsing one packet from urrobot: %s", ex)
-//                continue
+            //            data = self._get_data()
+            //            try:
+            //                tmpdict = self._parser.parse(data)
+            //                with self._dictLock:
+            //            self._dict = tmpdict
+            //            except ParsingException as ex:
+            //                self.logger.warning("Error parsing one packet from urrobot: %s", ex)
+            //                continue
 
-//            if "RobotModeData" not in self._dict:
-//                self.logger.warning("Got a packet from robot without RobotModeData, strange ...")
-//                continue
+            //            if "RobotModeData" not in self._dict:
+            //                self.logger.warning("Got a packet from robot without RobotModeData, strange ...")
+            //                continue
 
-//            self.lastpacket_timestamp = time.time()
+            //            self.lastpacket_timestamp = time.time()
 
-//            rmode = 0
-//            if self._parser.version >= (3, 0):
-//                rmode = 7
+            //            rmode = 0
+            //            if self._parser.version >= (3, 0):
+            //                rmode = 7
 
-//            if self._dict["RobotModeData"]["robotMode"] == rmode \
-//                    and self._dict["RobotModeData"]["isRealRobotEnabled"] is True \
-//                    and self._dict["RobotModeData"]["isEmergencyStopped"] is False \
-//                    and self._dict["RobotModeData"]["isSecurityStopped"] is False \
-//                    and self._dict["RobotModeData"]["isRobotConnected"] is True \
-//                    and self._dict["RobotModeData"]["isPowerOnRobot"] is True:
-//                self.running = True
-//            else:
-//                if self.running:
-//                    self.logger.error("Robot not running: " + str(self._dict["RobotModeData"]))
-//                self.running = False
+            //            if self._dict["RobotModeData"]["robotMode"] == rmode \
+            //                    and self._dict["RobotModeData"]["isRealRobotEnabled"] is True \
+            //                    and self._dict["RobotModeData"]["isEmergencyStopped"] is False \
+            //                    and self._dict["RobotModeData"]["isSecurityStopped"] is False \
+            //                    and self._dict["RobotModeData"]["isRobotConnected"] is True \
+            //                    and self._dict["RobotModeData"]["isPowerOnRobot"] is True:
+            //                self.running = True
+            //            else:
+            {
+                if (running)
+                    logger.error("Robot not running: " + self._dict["RobotModeData"]);
+                running = false;
+            }
 //            with self._dataEvent:
 //# print("X: new data")
 //            self._dataEvent.notifyAll()
         }
 
-        private void get_data()
+        private List<byte> get_data()
         {
-            //while True:
-            //# self.logger.debug("data queue size is: {}".format(len(self._dataqueue)))
-            //ans = self._parser.find_first_packet(self._dataqueue[:])
-            //if ans:
-            //    self._dataqueue = ans[1]
-            //    # self.logger.debug("found packet of size {}".format(len(ans[0])))
-            //    return ans[0]
-            //else:
-            //    # self.logger.debug("Could not find packet in received data")
-            //    tmp = self._s_secondary.recv(1024)
-            //    self._dataqueue += tmp
+            while(true)
+            {
+                //logger.debug(string.Format("data queue size is: {0}"),dataqueue.Length);
+
+                List<byte> first, second;
+                parser.find_first_packet(dataqueue, out first, out second);
+
+                if(first != null && second != null)
+                {
+                    dataqueue = second;
+                    logger.debug(string.Format("found packet of size {}", first.Count));
+                    return first;
+                }
+                else
+                {
+                    logger.debug("Could not find packet in received data");
+                    var tmp = s_secondary.recv(1024);
+                    dataqueue.Add(tmp);
+                }
+            }
         }
 
         public void wait(double timeout = 0.5)

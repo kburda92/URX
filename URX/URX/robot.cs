@@ -74,7 +74,7 @@ namespace URX
 
         public Transform set_pose(Transform trans, double acc = 0.01, double vel= 0.01, bool wait = true, string command = "movel", int threshold = 0)
         {
-            //    self.logger.debug("Setting pose to %s", trans.pose_vector)
+            logger.debug(string.Format("Setting pose to {0}"), trans.pose_vector);
             var t = csys * trans;
             var pose = base.movex(command, t.pose_vector, acc, vel, wait, threshold);
             if (pose != null)
@@ -97,8 +97,8 @@ namespace URX
         {
             var pose = base.getl(wait, _log);
             var trans = csys.inverse * new Transform(new Vector(pose));
-            //    if _log:
-            //        self.logger.debug("Returning pose to user: %s", trans.pose_vector)
+            if (_log)
+                logger.debug(string.Format("Returning pose to user: {0}", trans.pose_vector);
             return trans;
         }
 

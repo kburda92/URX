@@ -15,10 +15,11 @@ namespace URX
         private bool stop_event, buffering;
         string urHost;
         private Transform csys;
+        private Logger logger;
         public URRTMonitor(string urHost)
         {
             //threading.Thread.__init__(self)
-            //self.logger = logging.getLogger(self.__class__.__name__)
+            logger = new URX.Logger("URRTMonitor");
             daemon = true;
             stop_event = true;
             //self._dataEvent = threading.Condition()
@@ -130,18 +131,14 @@ namespace URX
             //    # Record the timestamp for this logical package
             //    timestamp = self.__recvTime
             //    pkgsize = struct.unpack('>i', head)[0]
-            //    self.logger.debug(
-            //        'Received header telling that package is %s bytes long',
-            //        pkgsize)
+            logger.debug(string.Format("Received header telling that package is {0} bytes long", pkgsize));
             //    payload = self.__recv_bytes(pkgsize - 4)
             //    if pkgsize >= 692:
             //        unp = self.rtstruct692.unpack(payload[:self.rtstruct692.size])
             //    elif pkgsize >= 540:
             //        unp = self.rtstruct540.unpack(payload[:self.rtstruct540.size])
             //    else:
-            //        self.logger.warning(
-            //            'Error, Received packet of length smaller than 540: %s ',
-            //            pkgsize)
+            logger.warning(string.Format("Error, Received packet of length smaller than 540: {0} ", pkgsize);
             //        return
 
             //    with self._dataAccess:
@@ -154,9 +151,7 @@ namespace URX
             //        if self._last_ctrl_ts != 0 and (
             //                self._ctrlTimestamp -
             //                self._last_ctrl_ts) > 0.010:
-            //            self.logger.warning(
-            //                "Error the controller failed to send us a packet: time since last packet %s s ",
-            //                self._ctrlTimestamp - self._last_ctrl_ts)
+            logger.warning(string.Format("Error the controller failed to send us a packet: time since last packet {0} s ", _ctrlTimestamp - _last_ctrl_ts));
             //        self._last_ctrl_ts = self._ctrlTimestamp
             //        self._qActual = np.array(unp[31:37])
             //        self._qTarget = np.array(unp[1:7])
