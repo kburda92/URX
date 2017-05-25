@@ -69,7 +69,7 @@ namespace URX
             program = Encoding.ASCII.GetBytes(string.Format("{0}\n\t{1}", program, new_line));
         }
 
-        private int constrain_unsigned_char(int value)
+        protected int constrain_unsigned_char(int value)
         {
             if (value < 0)
                 value = 0;
@@ -111,7 +111,7 @@ namespace URX
                 Debug.Assert(cog.Count == 3);
                 msg = string.Format("{0},{1}", msg, cog);
             }
-            msg = string.Format("{})", msg);
+            msg = string.Format("{0})", msg);
             add_line_to_program(msg);
 
         }
@@ -127,7 +127,7 @@ namespace URX
         public void set_tool_voltage(int voltage)
         {
             Debug.Assert(voltage == 0 || voltage == 12 || voltage == 24);
-            var msg = string.Format("set_tool_voltage({})", voltage);
+            var msg = string.Format("set_tool_voltage({0})", voltage);
             add_line_to_program(msg);
         }
 
@@ -137,7 +137,7 @@ namespace URX
             add_line_to_program(msg);
         }
 
-        private void socket_close(string socket_name)
+        protected void socket_close(string socket_name)
         {
             var msg = string.Format("socket_close(\"{0}\")", socket_name);
             add_line_to_program(msg);
@@ -150,29 +150,29 @@ namespace URX
             sync();
         }
 
-        private void socket_open(int var, string socket_host, int socket_port, string socket_name)
+        protected void socket_open(string socket_host, int socket_port, string socket_name)
         {
-            var msg = string.Format("socket_open(\"{}\",{},\"{}\")", socket_host, socket_port, socket_name);
+            var msg = string.Format("socket_open(\"{0}\",{1},\"{2}\")", socket_host, socket_port, socket_name);
             add_line_to_program(msg);
         }
 
-        private void socket_read_byte_list(int nbytes, string socket_name)
+        protected void socket_read_byte_list(int nbytes, string socket_name = "")
         {
-            var msg = string.Format("global var_value = socket_read_byte_list({},\"{}\")", nbytes, socket_name);
+            var msg = string.Format("global var_value = socket_read_byte_list({0},\"{1}\")", nbytes, socket_name);
             add_line_to_program(msg);
             sync();
         }
 
-        private void socket_send_string(string message, string socket_name)
+        protected void socket_send_string(string message, string socket_name = "")
         {
-            var msg = string.Format("socket_send_string(\"{}\",\"{}\")", message, socket_name);
+            var msg = string.Format("socket_send_string(\"{0}\",\"{1}\")", message, socket_name);
             add_line_to_program(msg);
             sync();
         }
  
-        private void socket_set_var(int var, int value, string socket_name)
+        protected void socket_set_var(string var, double value, string socket_name)
         {
-            var msg = string.Format("socket_set_var(\"{}\",{},\"{}\")", var, value, socket_name);
+            var msg = string.Format("socket_set_var(\"{0}\",{1},\"{2}\")", var, value, socket_name);
             add_line_to_program(msg);
             sync();
         }

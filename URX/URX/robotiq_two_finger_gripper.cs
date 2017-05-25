@@ -18,18 +18,27 @@ namespace URX
         public static string SPE = "SPE";
         public static string OBJ = "OBJ";
         public static string STA = "STA";
+        public static string FLT = "FLT";
         public static string POS = "POS";
 
         public const string SOCKET_HOST = "127.0.0.1";
         public const int SOCKET_PORT = 63352;
         public const string SOCKET_NAME = "gripper_socket";
 
+        public string socket_host;
+        public int socket_port;
+        public string socket_name;
+
         public RobotiqScript(string socket_host = SOCKET_HOST, int socket_port = SOCKET_PORT, string socket_name = SOCKET_NAME) :
             base()
         {
-            //# Reset connection to gripper
-            //    self._socket_close(self.socket_name)
-            //self._socket_open(self.socket_host, self.socket_port, self.socket_name)
+            this.socket_host = socket_host;
+            this.socket_port = socket_port;
+            this.socket_name = socket_name;
+
+            // Reset connection to gripper
+            socket_close(socket_name);
+            socket_open(socket_host, socket_port, socket_name);
         }
 
         private void import_rq_script()
@@ -46,51 +55,51 @@ namespace URX
 
         private void rq_get_var(string var_name, int nbytes)
         {
-            //    self._socket_send_string(b"GET {}".format(var_name))
-            //    self._socket_read_byte_list(nbytes)
+            socket_send_string(string.Format("GET {0}", var_name));
+            socket_read_byte_list(nbytes);
         }
 
         private void _get_gripper_fault()
         {
-            //    self._rq_get_var(FLT, 2)
+            rq_get_var(FLT, 2);
         }
 
         private void get_gripper_object()
         {
-            //    self._rq_get_var(OBJ, 1)
+            rq_get_var(OBJ, 1);
         }
 
         private void get_gripper_status()
         {
-            //    self._rq_get_var(STA, 1)
+            rq_get_var(STA, 1);
         }
 
-        public  void set_gripper_activate()
+        public void set_gripper_activate()
         {
-            //    self._socket_set_var(GTO, 1, self.socket_name)
+            socket_set_var(GTO, 1, socket_name);
         }
 
-        public void set_gripper_force(double value)
+        public void set_gripper_force(int value)
         {
-            //    value = self._constrain_unsigned_char(value)
-            //    self._socket_set_var(FOR, value, self.socket_name)
+            constrain_unsigned_char(value);
+            socket_set_var(FOR, value, socket_name);
         }
 
         public void set_gripper_position(int value)
         {
-            //    value = self._constrain_unsigned_char(value)
-            //    self._socket_set_var(POS, value, self.socket_name)
+            value = constrain_unsigned_char(value);
+            socket_set_var(POS, value, socket_name);
         }
 
         public void set_gripper_speed(int value)
         {
-            //    value = self._constrain_unsigned_char(value)
-            //    self._socket_set_var(SPE, value, self.socket_name)
+            constrain_unsigned_char(value);
+            socket_set_var(SPE, value, socket_name);
         }
 
         public void set_robot_activate()
         {
-            //    self._socket_set_var(ACT, 1, self.socket_name)
+            socket_set_var(ACT, 1, socket_name);
         }
     }
 
@@ -104,8 +113,8 @@ namespace URX
         public int socket_port;
         public string socket_name;
         public Robotiq_Two_Finger_Gripper(Robot robot, double payload = 0.85, int speed = 255, double force = 50,
-            string socket_host = RobotiqScript.SOCKET_HOST, 
-            int socket_port = RobotiqScript.SOCKET_PORT, 
+            string socket_host = RobotiqScript.SOCKET_HOST,
+            int socket_port = RobotiqScript.SOCKET_PORT,
             string socket_name = RobotiqScript.SOCKET_NAME)
         {
             this.robot = robot;
@@ -149,7 +158,7 @@ namespace URX
             urscript.set_gripper_position(value);
             urscript.sleep(sleep);
 
-            robot.send_program(urscript());
+            robot.send_program(urscript.call());
             time.sleep(sleep);
         }
 
@@ -162,5 +171,5 @@ namespace URX
         {
             gripper_action(255);
         }
-
     }
+}

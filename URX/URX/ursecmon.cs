@@ -211,7 +211,7 @@ namespace URX
                             logger.info(string.Format("Remove {0} bytes of garbage at begining of packet", counter));
 
                         first = new List<byte>();
-                        second = new List();
+                        second = new List<byte>();
                         foreach (var i in data)
                         {
                             if (i < psize)
@@ -230,7 +230,7 @@ namespace URX
                 }
                 else
                 {
-                    //                # self.logger.debug("data smaller than 5 bytes")
+                    logger.debug("data smaller than 5 bytes");
                     first = null;
                     second = null;
                 }
@@ -275,7 +275,7 @@ namespace URX
         //if not isinstance(prog, bytes):
         //    prog = prog.encode()
 
-        var data = Program(prog + b"\n");
+        var data = Program(prog + "\n");
         //with data.condition:
         //    with self._prog_queue_lock:
         //    self._prog_queue.append(data)
@@ -356,7 +356,7 @@ namespace URX
 
         public void wait(double timeout = 0.5)
         {
-        //    tstamp = self.lastpacket_timestamp
+            var tstamp = lastpacket_timestamp;
         //with self._dataEvent:
         //    self._dataEvent.wait(timeout)
         //    if tstamp == self.lastpacket_timestamp:
