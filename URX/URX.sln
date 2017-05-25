@@ -5,6 +5,8 @@ VisualStudioVersion = 14.0.25420.1
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "URX", "URX\URX.csproj", "{66396EC3-FCFA-48BB-88BA-29EFBDE03C1D}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "URX_test", "URX_test\URX_test.csproj", "{EF073563-E80F-473D-BEC5-28C5848F8D55}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -15,6 +17,10 @@ Global
 		{66396EC3-FCFA-48BB-88BA-29EFBDE03C1D}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{66396EC3-FCFA-48BB-88BA-29EFBDE03C1D}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{66396EC3-FCFA-48BB-88BA-29EFBDE03C1D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{EF073563-E80F-473D-BEC5-28C5848F8D55}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{EF073563-E80F-473D-BEC5-28C5848F8D55}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{EF073563-E80F-473D-BEC5-28C5848F8D55}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{EF073563-E80F-473D-BEC5-28C5848F8D55}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

@@ -186,27 +186,30 @@ namespace URX
             //    # Set coord. sys. to 0
             csys = new Transform();
 
-            //    print("A new coordinate system will be defined from the next three points")
-            //    print("Firs point is X, second Origin, third Y")
-            //    print("Set it as a new reference by calling myrobot.set_csys(new_csys)")
-            //    input("Move to first point and click Enter")
+            Console.WriteLine("A new coordinate system will be defined from the next three points");
+            Console.WriteLine("Firs point is X, second Origin, third Y");
+            Console.WriteLine("Set it as a new reference by calling myrobot.set_csys(new_csys)");
+
+            Console.WriteLine("Move to first point and click Enter");
+            Console.Read();
+
             //    # we do not use get_pose so we avoid rounding values
-            //    pose = URRobot.getl(self)
-            //    print("Introduced point defining X: {}".format(pose[:3]))
-            //    px = m3d.Vector(pose[:3])
-            //    input("Move to second point and click Enter")
-            //    pose = URRobot.getl(self)
-            //    print("Introduced point defining Origo: {}".format(pose[:3]))
-            //    p0 = m3d.Vector(pose[:3])
-            //    input("Move to third point and click Enter")
-            //    pose = URRobot.getl(self)
-            //    print("Introduced point defining Y: {}".format(pose[:3]))
-            //    py = m3d.Vector(pose[:3])
-
-            //    new_csys = m3d.Transform.new_from_xyp(px - p0, py - p0, p0)
-            //    self.set_csys(new_csys)
-
-            //    return new_csys
+            var pose = base.getl().ToList().GetRange(0,3);
+            Console.WriteLine(string.Format("Introduced point defining X: {0}", pose));
+            var px = new Vector(pose.ToArray());
+            Console.WriteLine("Move to second point and click Enter");
+            Console.Read();
+            pose = base.getl().ToList().GetRange(0, 3);
+            Console.WriteLine(string.Format("Introduced point defining Origo: {0}", pose));
+            var p0 = new Vector(pose.ToArray());
+            Console.WriteLine("Move to third point and click Enter");
+            Console.Read();
+            pose = base.getl().ToList().GetRange(0, 3);
+            Console.WriteLine(string.Format("Introduced point defining Y: {0}", pose));
+            var py = new Vector(pose.ToArray());
+            new_csys = new Transform.new_from_xyp(px - p0, py - p0, p0);
+            set_csys(new_csys);
+            return new_csys;
         }
 
         private int _x;

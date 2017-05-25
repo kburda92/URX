@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using URX;
 
 namespace URX
 {
@@ -34,166 +35,244 @@ namespace URX
 
     }
 
-    class ParserUtils
+    public class Pair
+    {
+        public Pair(int first, int second)
+        {
+            First = first;
+            Second = second;
+        }
+
+        public static bool operator < (Pair lhs, Pair rhs)
+        {
+            return lhs.First < rhs.First || (lhs.First == rhs.First && lhs.Second < rhs.Second);
+        }
+
+        public static bool operator >(Pair lhs, Pair rhs)
+        {
+            return rhs.First < lhs.First || (rhs.First == lhs.First && rhs.Second < lhs.Second);
+        }
+
+        public static bool operator <=(Pair lhs, Pair rhs)
+        {
+            return lhs.First < rhs.First || (lhs.First == rhs.First && lhs.Second <= rhs.Second);
+        }
+
+        public static bool operator >=(Pair lhs, Pair rhs)
+        {
+            return rhs.First < lhs.First || (rhs.First == lhs.First && rhs.Second <= lhs.Second);
+        }
+
+        public int First { get; set; }
+        public int Second { get; set; }
+    }
+
+
+    public class ParserUtils
     {
         private Logger logger;
+        public Pair version;
         public ParserUtils()
         {
             logger = new Logger("ursecmon");
-            //        self.version = (0, 0)
+            version = new Pair(0, 0);
         }
 
-        public void parse(int data)
+        public void parse(List<byte> data)
         {
-            Dictionary<string, string> allData;
+            var allData = new Dictionary<string, List<byte>>();
+            while(data.Count > 0)
+            {
+                var p = analyze_header(data);
+                var psize = p.Item1;
+                var ptype = p.Item2;
+                var pdata = p.Item3;
+                data = p.Item4.ToList();
 
-            //        while data:
-            //            psize, ptype, pdata, data = self.analyze_header(data)
-            //            # print "We got packet with size %i and type %s" % (psize, ptype)
-            //            if ptype == 16:
-            //                allData["SecondaryClientData"] = self._get_data(pdata, "!iB", ("size", "type"))
-            //                data = (pdata + data)[5:]  # This is the total size so we resend data to parser
-            //            elif ptype == 0:
-            //                # this parses RobotModeData for versions >=3.0 (i.e. 3.0)
-            //                if psize == 38:
-            //                    self.version = (3, 0)
-            //                    allData['RobotModeData'] = self._get_data(pdata, "!IBQ???????BBdd", ("size", "type", "timestamp", "isRobotConnected", "isRealRobotEnabled", "isPowerOnRobot", "isEmergencyStopped", "isSecurityStopped", "isProgramRunning", "isProgramPaused", "robotMode", "controlMode", "speedFraction", "speedScaling"))
-            //                elif psize == 46:  # It's 46 bytes in 3.2
-            //                    self.version = (3, 2)
-            //                    allData['RobotModeData'] = self._get_data(pdata, "!IBQ???????BBdd", ("size", "type", "timestamp", "isRobotConnected", "isRealRobotEnabled", "isPowerOnRobot", "isEmergencyStopped", "isSecurityStopped", "isProgramRunning", "isProgramPaused", "robotMode", "controlMode", "speedFraction", "speedScaling", "speedFractionLimit"))
-            //                else:
-            //                    allData["RobotModeData"] = self._get_data(pdata, "!iBQ???????Bd", ("size", "type", "timestamp", "isRobotConnected", "isRealRobotEnabled", "isPowerOnRobot", "isEmergencyStopped", "isSecurityStopped", "isProgramRunning", "isProgramPaused", "robotMode", "speedFraction"))
-            //            elif ptype == 1:
-            //                tmpstr = ["size", "type"]
-            //                for i in range(0, 6):
-            //                    tmpstr += ["q_actual%s" % i, "q_target%s" % i, "qd_actual%s" % i, "I_actual%s" % i, "V_actual%s" % i, "T_motor%s" % i, "T_micro%s" % i, "jointMode%s" % i]
+                if(ptype == 16)
+                {
+                    allData["SecondaryClientData"] = get_data(pdata, "!iB", ("size", "type"));
+                    // data = (pdata + data)[5:]  # This is the total size so we resend data to parser
 
-            //allData["JointData"] = self._get_data(pdata, "!iB dddffffB dddffffB dddffffB dddffffB dddffffB dddffffB", tmpstr)
+                }
+                else if(ptype == 0)
+                {
+                    if(psize == 38)
+                    {
+                        version.First = 3;
+                        version.Second = 0;
+                        allData['RobotModeData'] = get_data(pdata, "!IBQ???????BBdd", ("size", "type", "timestamp", "isRobotConnected", "isRealRobotEnabled", "isPowerOnRobot", "isEmergencyStopped", "isSecurityStopped", "isProgramRunning", "isProgramPaused", "robotMode", "controlMode", "speedFraction", "speedScaling"));
+                    }
+                    else if(psize == 46)
+                    {
+                        version.First = 3;
+                        version.Second = 2;
+                        allData['RobotModeData'] = get_data(pdata, "!IBQ???????BBdd", ("size", "type", "timestamp", "isRobotConnected", "isRealRobotEnabled", "isPowerOnRobot", "isEmergencyStopped", "isSecurityStopped", "isProgramRunning", "isProgramPaused", "robotMode", "controlMode", "speedFraction", "speedScaling", "speedFractionLimit"));
+                    }
+                    else
+                        allData["RobotModeData"] = get_data(pdata, "!iBQ???????Bd", ("size", "type", "timestamp", "isRobotConnected", "isRealRobotEnabled", "isPowerOnRobot", "isEmergencyStopped", "isSecurityStopped", "isProgramRunning", "isProgramPaused", "robotMode", "speedFraction"))
 
-            //            elif ptype == 4:
-            //                if self.version< (3, 2):
-            //                    allData["CartesianInfo"] = self._get_data(pdata, "iBdddddd", ("size", "type", "X", "Y", "Z", "Rx", "Ry", "Rz"))
-            //                else:
-            //                    allData["CartesianInfo"] = self._get_data(pdata, "iBdddddddddddd", ("size", "type", "X", "Y", "Z", "Rx", "Ry", "Rz", "tcpOffsetX", "tcpOffsetY", "tcpOffsetZ", "tcpOffsetRx", "tcpOffsetRy", "tcpOffsetRz"))
-            //            elif ptype == 5:
-            //                allData["LaserPointer(OBSOLETE)"] = self._get_data(pdata, "iBddd", ("size", "type"))
-            //            elif ptype == 3:
+                }
+                else if (ptype == 1)
+                {
+                    var tmpstr = new List<string>();
+                    tmpstr.Add("size");
+                    tmpstr.Add("type");
 
-            //                if self.version >= (3, 0):
-            //                    fmt = "iBiibbddbbddffffBBb"     # firmware >= 3.0
-            //                else:
-            //                    fmt = "iBhhbbddbbddffffBBb"     # firmware < 3.0
+                    for(int i=0;i<6;i++)
+                    {
+                        tmpstr.Add(string.Format("q_actual{0}", i));
+                        tmpstr.Add(string.Format("q_target{0}", i));
+                        tmpstr.Add(string.Format("qd_actual{0}", i));
+                        tmpstr.Add(string.Format("I_actual{0}", i));
+                        tmpstr.Add(string.Format("V_actual{0}", i));
+                        tmpstr.Add(string.Format("T_motor{0}", i));
+                        tmpstr.Add(string.Format("T_micro{0}", i));
+                        tmpstr.Add(string.Format("jointMode{0}", i));
+                    }
+                    allData["JointData"] = get_data(pdata, "!iB dddffffB dddffffB dddffffB dddffffB dddffffB dddffffB", tmpstr)
+                }
+                else if (ptype == 4)
+                {
+                    if(version < new Pair(3,2))
+                        allData["CartesianInfo"] = get_data(pdata, "iBdddddd", ("size", "type", "X", "Y", "Z", "Rx", "Ry", "Rz"))
+                    else
+                        allData["CartesianInfo"] = get_data(pdata, "iBdddddddddddd", ("size", "type", "X", "Y", "Z", "Rx", "Ry", "Rz", "tcpOffsetX", "tcpOffsetY", "tcpOffsetZ", "tcpOffsetRx", "tcpOffsetRy", "tcpOffsetRz"))
+                }
+                else if(ptype == 5)
+                    allData["LaserPointer(OBSOLETE)"] = get_data(pdata, "iBddd", ("size", "type"));
+                else if(ptype == 3)
+                {
+                    if (version >= new Pair(3, 0))
+                        fmt = "iBiibbddbbddffffBBb";
+                    else
+                        fmt = "iBhhbbddbbddffffBBb";
+                    //                allData["MasterBoardData"] = self._get_data(pdata, fmt, ("size", "type", "digitalInputBits", "digitalOutputBits", "analogInputRange0", "analogInputRange1", "analogInput0", "analogInput1", "analogInputDomain0", "analogInputDomain1", "analogOutput0", "analogOutput1", "masterBoardTemperature", "robotVoltage48V", "robotCurrent", "masterIOCurrent"))  # , "masterSafetyState" ,"masterOnOffState", "euromap67InterfaceInstalled"   ))
 
-            //                allData["MasterBoardData"] = self._get_data(pdata, fmt, ("size", "type", "digitalInputBits", "digitalOutputBits", "analogInputRange0", "analogInputRange1", "analogInput0", "analogInput1", "analogInputDomain0", "analogInputDomain1", "analogOutput0", "analogOutput1", "masterBoardTemperature", "robotVoltage48V", "robotCurrent", "masterIOCurrent"))  # , "masterSafetyState" ,"masterOnOffState", "euromap67InterfaceInstalled"   ))
-            //            elif ptype == 2:
-            //                allData["ToolData"] = self._get_data(pdata, "iBbbddfBffB", ("size", "type", "analoginputRange2", "analoginputRange3", "analogInput2", "analogInput3", "toolVoltage48V", "toolOutputVoltage", "toolCurrent", "toolTemperature", "toolMode"))
-            //            elif ptype == 9:
-            //                continue  # This package has a length of 53 bytes. It is used internally by Universal Robots software only and should be skipped.
-            //            elif ptype == 8 and self.version >= (3, 2):
-            //                allData["AdditionalInfo"] = self._get_data(pdata, "iB??", ("size", "type", "teachButtonPressed", "teachButtonEnabled"))
-            //            elif ptype == 7 and self.version >= (3, 2):
-            //                allData["ForceModeData"] = self._get_data(pdata, "iBddddddd", ("size", "type", "x", "y", "z", "rx", "ry", "rz", "robotDexterity"))
-            //            # elif ptype == 8:
-            //            #     allData["varMessage"] = self._get_data(pdata, "!iBQbb iiBAcAc", ("size", "type", "timestamp", "source", "robotMessageType", "code", "argument", "titleSize", "messageTitle", "messageText"))
-            //            # elif ptype == 7:
-            //            #     allData["keyMessage"] = self._get_data(pdata, "!iBQbb iiBAcAc", ("size", "type", "timestamp", "source", "robotMessageType", "code", "argument", "titleSize", "messageTitle", "messageText"))
-
-            //            elif ptype == 20:
-            //                tmp = self._get_data(pdata, "!iB Qbb", ("size", "type", "timestamp", "source", "robotMessageType"))
-            //                if tmp["robotMessageType"] == 3:
-            //                    allData["VersionMessage"] = self._get_data(pdata, "!iBQbb bAbBBiAb", ("size", "type", "timestamp", "source", "robotMessageType", "projectNameSize", "projectName", "majorVersion", "minorVersion", "svnRevision", "buildDate"))
-            //                elif tmp["robotMessageType"] == 6:
-            //                    allData["robotCommMessage"] = self._get_data(pdata, "!iBQbb iiAc", ("size", "type", "timestamp", "source", "robotMessageType", "code", "argument", "messageText"))
-            //                elif tmp["robotMessageType"] == 1:
-            //                    allData["labelMessage"] = self._get_data(pdata, "!iBQbb iAc", ("size", "type", "timestamp", "source", "robotMessageType", "id", "messageText"))
-            //                elif tmp["robotMessageType"] == 2:
-            //                    allData["popupMessage"] = self._get_data(pdata, "!iBQbb ??BAcAc", ("size", "type", "timestamp", "source", "robotMessageType", "warning", "error", "titleSize", "messageTitle", "messageText"))
-            //                elif tmp["robotMessageType"] == 0:
-            //                    allData["messageText"] = self._get_data(pdata, "!iBQbb Ac", ("size", "type", "timestamp", "source", "robotMessageType", "messageText"))
-            //                elif tmp["robotMessageType"] == 8:
-            //                    allData["varMessage"] = self._get_data(pdata, "!iBQbb iiBAcAc", ("size", "type", "timestamp", "source", "robotMessageType", "code", "argument", "titleSize", "messageTitle", "messageText"))
-            //                elif tmp["robotMessageType"] == 7:
-            //                    allData["keyMessage"] = self._get_data(pdata, "!iBQbb iiBAcAc", ("size", "type", "timestamp", "source", "robotMessageType", "code", "argument", "titleSize", "messageTitle", "messageText"))
-            //                elif tmp["robotMessageType"] == 5:
-            //                    allData["keyMessage"] = self._get_data(pdata, "!iBQbb iiAc", ("size", "type", "timestamp", "source", "robotMessageType", "code", "argument", "messageText"))
-            //                else:
-                                    logger.debug(string.Format("Message type parser not implemented {0}", tmp));
-            //            else:
-                              logger.debug(string.Format("Unknown packet type {0} with size {1}", ptype, psize));
-
-            //        return allData
-
+                }
+                else if(ptype == 2)
+                    allData["ToolData"] = get_data(pdata, "iBbbddfBffB", ("size", "type", "analoginputRange2", "analoginputRange3", "analogInput2", "analogInput3", "toolVoltage48V", "toolOutputVoltage", "toolCurrent", "toolTemperature", "toolMode"));
+                else if (ptype == 9)
+                    continue;
+                else if(ptype == 8 && version >= new Pair(3,2))
+                    allData["AdditionalInfo"] = get_data(pdata, "iB??", ("size", "type", "teachButtonPressed", "teachButtonEnabled"))
+                else if(ptype == 7 && version >= new Pair(3,2))
+                    allData["ForceModeData"] = get_data(pdata, "iBddddddd", ("size", "type", "x", "y", "z", "rx", "ry", "rz", "robotDexterity"))
+                else if(ptype == 20)
+                {
+                    var tmp = get_data(pdata, "!iB Qbb", ("size", "type", "timestamp", "source", "robotMessageType"));
+                    if (tmp["robotMessageType"] == 3)
+                        allData["VersionMessage"] = get_data(pdata, "!iBQbb bAbBBiAb", ("size", "type", "timestamp", "source", "robotMessageType", "projectNameSize", "projectName", "majorVersion", "minorVersion", "svnRevision", "buildDate"))
+                    else if (tmp["robotMessageType"] == 6)
+                        allData["robotCommMessage"] = get_data(pdata, "!iBQbb iiAc", ("size", "type", "timestamp", "source", "robotMessageType", "code", "argument", "messageText"))
+                    else if (tmp["robotMessageType"] == 1)
+                        allData["labelMessage"] = get_data(pdata, "!iBQbb iAc", ("size", "type", "timestamp", "source", "robotMessageType", "id", "messageText"))
+                    else if (tmp["robotMessageType"] == 2)
+                        allData["popupMessage"] = get_data(pdata, "!iBQbb ??BAcAc", ("size", "type", "timestamp", "source", "robotMessageType", "warning", "error", "titleSize", "messageTitle", "messageText"))
+                    else if (tmp["robotMessageType"] == 0)
+                        allData["messageText"] = get_data(pdata, "!iBQbb Ac", ("size", "type", "timestamp", "source", "robotMessageType", "messageText"))
+                    else if (tmp["robotMessageType"] == 8)
+                        allData["varMessage"] = get_data(pdata, "!iBQbb iiBAcAc", ("size", "type", "timestamp", "source", "robotMessageType", "code", "argument", "titleSize", "messageTitle", "messageText"))
+                    else if (tmp["robotMessageType"] == 7)
+                        allData["keyMessage"] = get_data(pdata, "!iBQbb iiBAcAc", ("size", "type", "timestamp", "source", "robotMessageType", "code", "argument", "titleSize", "messageTitle", "messageText"))
+                    else if (tmp["robotMessageType"] == 5)
+                        allData["keyMessage"] = get_data(pdata, "!iBQbb iiAc", ("size", "type", "timestamp", "source", "robotMessageType", "code", "argument", "messageText"))
+                    else
+                        logger.debug(string.Format("Message type parser not implemented {0}", tmp));
+                }
+                else
+                    logger.debug(string.Format("Unknown packet type {0} with size {1}", ptype, psize));
+            }
+            return allData;
         }
 
-        private void get_data(int data, int fmt, int names)
+        private Dictionary<string, List<byte>>get_data(List<byte> data, string fmt, List<string> names)
         {
-            //        tmpdata = copy(data)
-            //        fmt = fmt.strip()  # space may confuse us
-            //        d = dict()
-            //        i = 0
-            //        j = 0
-            //        while j<len(fmt) and i<len(names):
-            //            f = fmt[j]
-            //            if f in (" ", "!", ">", "<"):
-            //                j += 1
-            //            elif f == "A":  # we got an array
-            //                # first we need to find its size
-            //                if j == len(fmt) - 2:  # we are last element, size is the rest of data in packet
-            //                    arraysize = len(tmpdata)
-            //                else:  # size should be given in last element
-            //                    asn = names[i - 1]
-            //                    if not asn.endswith("Size"):
-            //                        raise ParsingException("Error, array without size ! %s %s" % (asn, i))
-            //                    else:
-            //                        arraysize = d[asn]
-            //                d[names[i]] = tmpdata[0:arraysize]
-            //                # print "Array is ", names[i], d[names[i]]
-            //                tmpdata = tmpdata[arraysize:]
-            //                j += 2
-            //                i += 1
-            //            else:
-            //                fmtsize = struct.calcsize(fmt[j])
-            //                # print "reading ", f , i, j,  fmtsize, len(tmpdata)
-            //                if len(tmpdata) < fmtsize:  # seems to happen on windows
-            //                    raise ParsingException("Error, length of data smaller than advertized: ", len(tmpdata), fmtsize, "for names ", names, f, i, j)
-            //                d[names[i]] = struct.unpack("!" + f, tmpdata[0:fmtsize])[0]
-            //# print names[i], d[names[i]]
-            //tmpdata = tmpdata[fmtsize:]
-            //j += 1
-            //                i += 1
-            //        return d
+            var tmpdata = data.ToList();
+            fmt = fmt.Trim();
+            var d = new Dictionary<string, List<byte>>();
+            int i = 0;
+            int j = 0;
+            while(j < fmt.Length && i < names.Count)
+            {
+                var f = fmt[j];
+                if (f == ' ' || f == '!' || f == '>' || f == '<')
+                    j++;
+                else if (f == 'A')
+                {
+                    int arraysize;
+                    string asn;
+                    if (j == fmt.Length - 2)
+                        arraysize = tmpdata.Count;
+                    else
+                    {
+                        asn = names[i - 1];
+                        if (!asn.EndsWith("Size"))
+                            throw new ParsingException(string.Format("Error, array without size ! {0} {1}", asn, i));
+                        else
+                            arraysize = 0;//TODO d[asn];
+                    }
+
+                    d[names[i]] = tmpdata.GetRange(0, arraysize);
+                    tmpdata = tmpdata.GetRange(arraysize, tmpdata.Count);
+                    j += 2;
+                    i += 1;
+                }
+                else
+                {
+                    //                fmtsize = struct.calcsize(fmt[j])
+                    // # print "reading ", f , i, j,  fmtsize, len(tmpdata)
+                    if (tmpdata.Count < fmtsize)
+                        throw new ParsingException("Error, length of data smaller than advertized: " + tmpdata.Count, fmtsize, "for names ", names, f, i, j);
+                    // d[names[i]] = struct.unpack("!" + f, tmpdata[0:fmtsize])[0]
+                    //# print names[i], d[names[i]]
+                    tmpdata = tmpdata.GetRange(fmtsize, tmpdata.Count);
+                    j++;
+                    j++;
+                }
+            }
+            return d;
         }
 
-        public void get_header(int data)
+        public Tuple<int, int> get_header(List<byte> data)
         {
             //        return struct.unpack("!iB", data[0:5])
         }
 
-        public void analyze_header(int[] data)
+        public Tuple<int, int, byte[], byte[]> analyze_header(List<byte> data)
         {
-            if (data.Length < 5)
+            if (data.Count < 5)
                 throw new ParsingException(string.Format("Packet size %s smaller than header size (5 bytes)", data.Length));
-            //        else:
-            //            psize, ptype = self.get_header(data)
-            //            if psize< 5:
-            //                raise ParsingException("Error, declared length of data smaller than its own header(5): ", psize)
-            //            elif psize > len(data):
-            //                raise ParsingException("Error, length of data smaller (%s) than declared (%s)" % (len(data), psize))
-            //        return psize, ptype, data[:psize], data[psize:]
+            else
+            {
+                var p = get_header(data);
+                var psize = p.Item1;
+                var ptype = p.Item2;
+                if (psize < 5)
+                    throw new ParsingException(string.Format("Error, declared length of data smaller than its own header(5): " + psize));
+                else if(psize > data.Count)
+                    throw new ParsingException(string.Format("Error, length of data smaller ({0}) than declared ({1})", data.Count, psize));
+                byte[] temp1 = new byte[psize];
+                Array.Copy(data.ToArray(), 0, temp1, 0, psize);
+                byte[] temp2 = new byte[data.Count - psize];
+                Array.Copy(data.ToArray(), 0, temp2, 0, data.Count - psize);
+                return Tuple.Create(psize, ptype, temp1, temp2);
+            }   
         }
 
-        public void find_first_packet(List<byte> data, out List<byte> first, out List<byte> second)
+        public Tuple<List<byte>, List<byte>> find_first_packet(List<byte> data)
         {
             int counter = 0;
             int limit = 10;
-            int psize = 0;
-            int ptype = 0;
+            List<Byte> first, second;
             while(true)
             {
                 if(data.Count >= 5)
                 {
-                    //psize, ptype = self.get_header(data)
-                    if(psize < 5 || psize > 200 || ptype != 16)
+                    var p = get_header(data);
+                    var psize = p.Item1;
+                    var ptype = p.Item2;
+                    if (psize < 5 || psize > 200 || ptype != 16)
                     {
                         data.RemoveAt(0);
                         counter++;
@@ -219,22 +298,22 @@ namespace URX
                             else
                                 second.Add(i);
                         }
+                        return Tuple.Create(first, second);
                     }
                     else
                     {
                         // packet is not complete
-                        logger.debug(string.Format("Packet is not complete, advertised size is {0}, received size is {1}, type is {2}"), psize, len(data), ptype);
-                        first = null;
-                        second = null;
+                        logger.debug(string.Format("Packet is not complete, advertised size is {0}, received size is {1}, type is {2}", psize, data.Count, ptype));
+                        return Tuple.Create<List<byte>, List<byte>>(null, null);
                     }
                 }
                 else
                 {
                     logger.debug("data smaller than 5 bytes");
-                    first = null;
-                    second = null;
+                    return Tuple.Create<List<byte>, List<byte>>(null, null);
                 }
             }
+           
         }
     }
 
@@ -336,14 +415,13 @@ namespace URX
             {
                 //logger.debug(string.Format("data queue size is: {0}"),dataqueue.Length);
 
-                List<byte> first, second;
-                parser.find_first_packet(dataqueue, out first, out second);
+                var ans = parser.find_first_packet(dataqueue);
 
-                if(first != null && second != null)
+                if(ans.Item1 != null && ans.Item2 != null)
                 {
-                    dataqueue = second;
-                    logger.debug(string.Format("found packet of size {}", first.Count));
-                    return first;
+                    dataqueue = ans.Item2;
+                    //logger.debug(string.Format("found packet of size {0}", ans.Item1));
+                    return ans.Item1;
                 }
                 else
                 {
@@ -469,8 +547,5 @@ namespace URX
             //with self._prog_queue_lock:
             //self._s_secondary.close()
         }
-
-
-
     }
 }
